@@ -38,7 +38,7 @@
     >
       Skip to skills profile
     </a>
-    <!-- Primary navigation uses page anchors; no account or separate page is needed. -->
+    <!-- Keep the header focused on the website name. -->
     <header class="site-header">
       <div class="shell nav-wrap">
         <a
@@ -46,24 +46,7 @@
           href="#"
           aria-label="ORBI home"
         >
-          <span
-            class="brand-orbit"
-            aria-hidden="true"
-          ></span>
           ORBI
-          <span class="brand-dot">.</span>
-        </a>
-        <nav aria-label="Main navigation">
-          <a href="#how-it-works">How it works</a>
-          <a href="#profile">Skills profile</a>
-          <a href="#results">Career matches</a>
-        </nav>
-        <a
-          class="nav-cta"
-          href="#profile"
-        >
-          Find your direction
-          <span aria-hidden="true">↗</span>
         </a>
       </div>
     </header>
@@ -232,40 +215,31 @@
               <br />
               <span>A clearer path.</span>
             </h2>
-            <p>
-              Connect what you know today with what you could do next.
-            </p>
             <!-- A static overview explains the workflow without implying progress. -->
             <ol class="workspace-guide" aria-label="Your exploration workflow">
               <li>
                 <span class="guide-number">01</span>
                 <div>
                   <strong>Map your strengths</strong>
-                  <p>Your degree and the skills you already have.</p>
                 </div>
               </li>
               <li>
                 <span class="guide-number">02</span>
                 <div>
                   <strong>Explore your options</strong>
-                  <p>Career matches with evidence you can inspect.</p>
                 </div>
               </li>
               <li>
                 <span class="guide-number">03</span>
                 <div>
                   <strong>Make your next move</strong>
-                  <p>Learning resources and practical AI suggestions.</p>
                 </div>
               </li>
             </ol>
             <div class="privacy-note">
               <span aria-hidden="true">◈</span>
               <p>
-                No personal details or CV needed.
-                <br />
-                No profile is saved to disk. AI sharing starts only when you
-                choose Generate AI Insight.
+                No account or CV required. Your profile is not saved.
               </p>
             </div>
           </aside>
@@ -305,9 +279,6 @@
                 {% endfor %}
               </select>
             </div>
-            <p class="field-help">
-              Your degree adds context. It never automatically adds skills.
-            </p>
             <fieldset>
               <legend class="field-label">
                 Your current skills
@@ -359,8 +330,7 @@
                 No skills found. Try a different search.
               </p>
               <p class="field-help">
-                Select at least one skill you already have. You can change these
-                anytime.
+                Select at least one skill.
               </p>
             </fieldset>
             <div
@@ -379,7 +349,6 @@
               <span id="analyse-label">Analyse My Future</span>
               <span aria-hidden="true">↗</span>
             </button>
-            <p class="form-footnote">Self-reported skills. No account required.</p>
             <!-- Matching uses the JavaScript JSON API, so explain the fallback clearly. -->
             <noscript>
               <p class="notice">
@@ -420,8 +389,7 @@
           </span>
           <h3>Your next chapter starts above.</h3>
           <p>
-            Choose your degree and skills, then analyse your profile to explore career
-            matches.
+            Select your degree and skills to see your matches.
           </p>
           <a
             class="text-link"
@@ -440,27 +408,18 @@
             class="profile-summary"
           ></p>
           <p class="results-explainer">
-            Skill coverage = matched required skills ÷ all required skills × 100%. This
-            covers ORBI’s curated skill subset and is not employment probability or
-            complete job readiness.
+            Scores compare skills, not employment probability.
           </p>
           <div
             id="results-warnings"
             aria-live="polite"
           ></div>
-          <!-- Selected-skill evidence is separate from occupation-level DOSM counts. -->
+          <!-- Selected skills retain their trend directions. -->
           <section
             class="trend-section"
             aria-labelledby="trends-title"
           >
-            <p class="eyebrow">EVIDENCE, NOT ASSUMPTIONS</p>
             <h3 id="trends-title">Skills trend signals</h3>
-            <p class="results-explainer">
-              Signals for your selected skills. Unknown means the reviewed sources
-              do not establish a direct trend for this skill; it does not mean Stable.
-              Evidence includes global employer expectations and historical hiring
-              assessment activity. Neither is a Malaysian vacancy forecast.
-            </p>
             <div
               id="skill-trends"
               class="trend-grid"
@@ -489,12 +448,7 @@
             aria-labelledby="scenario-title"
           >
             <div>
-              <p class="eyebrow">EXPLORE THE UNCERTAINTY</p>
               <h3 id="scenario-title">Compare disruption scenarios</h3>
-              <p class="results-explainer">
-                These are ORBI heuristic estimates, not measured probabilities of
-                employment or AI disruption. Scenario changes recompute the top three.
-              </p>
             </div>
             <fieldset class="scenario-options">
               <legend class="sr-only">Choose disruption scenario</legend>
@@ -564,17 +518,6 @@
                 <tbody id="gap-rows"></tbody>
               </table>
             </div>
-            <p
-              id="evidence-note"
-              class="field-help"
-            ></p>
-            <details class="source-details">
-              <summary>Required skill trend evidence and dates</summary>
-              <div
-                id="required-trends"
-                class="trend-grid"
-              ></div>
-            </details>
           </section>
           <!-- Part 4: ordered missing-skill resources and explicit unavailable states. -->
           <section
@@ -589,11 +532,6 @@
               id="learning-career"
               class="gap-career-name"
             ></p>
-            <p class="results-explainer">
-              Steps cover the selected career's missing skills. Foundational
-              resources come before dependent topics. Completing a resource does
-              not certify job readiness or automatically change your skills.
-            </p>
             <p
               id="learning-summary"
               class="learning-summary"
@@ -604,14 +542,8 @@
               class="learning-steps"
             ></ol>
             <div id="learning-unavailable"></div>
-            <p class="field-help">
-              Order is curated by ORBI. Times labelled ORBI estimate are planning
-              assumptions; provider durations are identified separately. Total
-              time covers listed resources and excludes extra prerequisite study.
-              Sources are manually checked and may change after the review date.
-            </p>
           </section>
-          <!-- Part 5: ORBI contribution rationales linked to official UN definitions. -->
+          <!-- Part 5: SDG names and ORBI contribution rationales. -->
           <section
             id="sdg-section"
             class="gap-panel"
@@ -621,9 +553,7 @@
             <p class="eyebrow">04 / PURPOSE IN PRACTICE</p>
             <h3 id="sdg-title">Connect your skills to the SDGs</h3>
             <p class="results-explainer">
-              These are ORBI interpretations of possible contributions, informed
-              by UN goal definitions. They are not UN endorsements or evidence
-              of measured impact; outcomes depend on the project and its users.
+              Potential contributions, interpreted by ORBI.
             </p>
             <div id="career-sdg"></div>
             <details class="source-details">
@@ -651,11 +581,8 @@
             <p class="eyebrow">05 / A GROUNDED PERSPECTIVE</p>
             <h3 id="insight-title">Your AI career insight</h3>
             <p class="results-explainer">
-              Get a portfolio idea, a practice task and interview preparation for
-              the career selected above. This sends
-              your degree, selected skills and sourced results to RunPod when
-              you click the button. AI proposes actions tailored to your skills;
-              resource links come from your verified learning path.
+              Generate project, practice and interview ideas. Your degree,
+              skills and career context are shared with RunPod when you click.
             </p>
             <p
               id="insight-model"
@@ -675,56 +602,7 @@
               aria-live="polite"
             ></p>
             <div id="insight-output"></div>
-            <p class="field-help">
-              Advice supports your decisions and does not make hiring decisions.
-              If RunPod is unavailable, your matches and learning path still work.
-            </p>
           </section>
-          <!-- Comparable Malaysian occupation observations; these do not affect ranking. -->
-          <section
-            id="market-section"
-            class="gap-panel"
-            aria-labelledby="market-title"
-            hidden
-          >
-            <p class="eyebrow">LOCAL CONTEXT</p>
-            <h3 id="market-title">Malaysia market signals</h3>
-            <p class="results-explainer">
-              Published DOSM observations for the selected career. These are
-              historical online recruitment statistics, kept separate from skill
-              trends and scenario scores. Missing records are not zero demand.
-            </p>
-            <div id="market-content"></div>
-          </section>
-          <details class="source-details">
-            <summary>Sources, calculation and update method</summary>
-            <p>
-              Trend codes: Rising +1, Stable 0, Declining −1, Unknown 0.
-              Trend adjustment = 10 × the average code across all required skills.
-              Scenario score = skill coverage + multiplier × trend adjustment,
-              limited to 0–100. Unknowns stay in the denominator.
-            </p>
-            <p>
-              Data is manually reviewed against public publications and reloaded
-              on every analysis request. Data updated is the curator's review date,
-              not a live sync timestamp. Newer publications require a dataset review;
-              sources are not automatically synchronised from the web.
-            </p>
-            <p>
-              Missing or invalid trend evidence contributes zero adjustment.
-              A trend-file failure falls back to skill coverage ranking. The same
-              career order in both scenarios can be a valid result.
-            </p>
-          </details>
-          <!-- Validation notices explain records omitted from the displayed evidence. -->
-          <details
-            id="evidence-issues"
-            class="source-details"
-            hidden
-          >
-            <summary>Evidence validation notices</summary>
-            <ul id="evidence-issues-list"></ul>
-          </details>
           <!-- Invalid career mappings are excluded instead of inflating coverage scores. -->
           <details
             id="excluded-details"
@@ -734,12 +612,6 @@
             <summary>Catalogue records excluded from matching</summary>
             <ul id="excluded-list"></ul>
           </details>
-          <p class="method-note">
-            How we rank: scenario score, then skill coverage, then degree relevance
-            for exact ties, then career name. Cross-degree paths are included. ORBI curates skill
-            subsets and degree associations from the linked sources. O*NET describes
-            U.S. occupations; local requirements may differ.
-          </p>
         </div>
       </section>
     </main>

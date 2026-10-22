@@ -47,9 +47,7 @@ function clearInsight() {
   document.querySelector("#insight-output").replaceChildren();
   document.querySelector("#insight-output").setAttribute("aria-busy", "false");
   document.querySelector("#insight-status").textContent =
-    insightConfig?.configured === false
-      ? insightConfig.message
-      : "Generate an insight for the current career when you are ready.";
+    insightConfig?.configured === false ? insightConfig.message : "";
 }
 
 // Read only public configuration status; this does not call the model or expose keys.
@@ -59,7 +57,7 @@ async function checkInsightConfiguration() {
     if (!response.ok) return;
     insightConfig = await response.json();
     document.querySelector("#insight-model").textContent = insightConfig.configured
-      ? `Configured model: ${insightConfig.model} · RunPod ${insightConfig.mode}`
+      ? `Model: ${insightConfig.model}`
       : insightConfig.message;
     if (!insightController) {
       insightButton.disabled = !insightConfig.configured;
@@ -126,8 +124,8 @@ search.addEventListener("input", () => {
   document.querySelector("#no-skills").hidden = visible > 0;
 });
 
-// Open catalogue-backed HTTP(S) sources without allowing access to the opener page.
-function sourceLink(label, url) {
+// Open learning resources without allowing access to the opener page.
+function resourceLink(label, url) {
   const link = element("a", "", label);
   // Catalogue validation also checks the scheme on the server.
   const parsed = new URL(url);
@@ -174,12 +172,6 @@ function renderCard(match, index) {
       skillList(match.missing_skill_ids) || "None in this skill subset",
     ),
   );
-  const sources = element("div", "card-sources");
-  sources.append(
-    sourceLink(match.career.source_name, match.career.source_url),
-    sourceLink("Skill evidence ↗", match.career.skill_source_url),
-    element("small", "", `Source checked: ${match.career.source_checked_at}`),
-  );
   const scenarioScore = element("div", "scenario-score");
   scenarioScore.append(
     element("span", "", "Scenario ranking score · estimate"),
@@ -188,8 +180,7 @@ function renderCard(match, index) {
   const adjustment = element(
     "p",
     "field-help",
-    `Trend adjustment: ${match.trend_adjustment >= 0 ? "+" : ""}${match.trend_adjustment.toFixed(2)} × ${match.scenario_multiplier}. ` +
-      `Directional evidence: ${match.known_trend_count}/${match.career.required_skills.length} required skills. Unknown counts as 0, not Stable.`,
+    `Trend evidence: ${match.known_trend_count}/${match.career.required_skills.length} skills`,
   );
   card.append(
     rank,
@@ -201,7 +192,6 @@ function renderCard(match, index) {
     adjustment,
     matched,
     missing,
-    sources,
   );
   return card;
 }
@@ -217,85 +207,14 @@ function trendBadge(direction) {
   );
 }
 
-// Attach the evidence's metric, geography and correct date label to each direction.
+// Display the skill name and trend direction.
 function renderTrend(trend) {
   const card = element("article", "trend-card");
   card.append(
     element("h4", "", skillNames.get(trend.skill_id) || trend.skill_id),
     trendBadge(trend.trend_direction),
   );
-  const details = element("details", "trend-evidence");
-  details.append(
-    element("summary", "", "Evidence & dates"),
-    element("p", "", trend.evidence_note),
-  );
-  if (trend.source_url) {
-    const label = trend.trend_direction === "unknown" ? "Reviewed source" : "Source";
-    details.append(
-      sourceLink(`${label}: ${trend.source_name} ↗`, trend.source_url),
-      element(
-        "p",
-        "",
-        `${{ publication: "Published", snapshot: "Snapshot as of", review: "Reviewed" }[trend.source_date_kind] || "Source date"}: ${trend.source_date} · Period: ${trend.reference_period} · Reviewed: ${trend.updated_at}`,
-      ),
-    );
-  }
-  if (trend.source_skill) {
-    details.append(element("p", "", `Source category: ${trend.source_skill}`));
-  }
-  if (trend.geography || trend.metric) {
-    details.append(
-      element("p", "", `Scope: ${trend.geography} · Metric: ${trend.metric}`),
-    );
-  }
-  if (trend.supporting_urls) {
-    trend.supporting_urls.split(";").forEach((url, index) => {
-      details.append(sourceLink(`Supporting source ${index + 1} ↗`, url));
-    });
-  }
-  card.append(details);
   return card;
-}
-
-// Show local observations independently of ranking; missing evidence is not zero.
-function renderMarket(signal) {
-  const target = document.querySelector("#market-content");
-  target.replaceChildren();
-  if (!signal.records.length) {
-    target.append(
-      element("p", "field-help", "Local market evidence unavailable for this career."),
-    );
-    return;
-  }
-  const records = element("div", "market-records");
-  signal.records.forEach((record) => {
-    const card = element("article", "market-record");
-    card.append(
-      element("h4", "", record.period),
-      element("strong", "market-count", record.job_offerings.toLocaleString("en")),
-      element("p", "", `Online job offerings · ${record.occupation_name}`),
-      sourceLink(`${record.source_name} ↗`, record.source_url),
-      element(
-        "p",
-        "field-help",
-        `Published: ${record.source_date} · Data updated: ${record.updated_at}`,
-      ),
-      element("p", "field-help", record.mapping_note),
-    );
-    records.append(card);
-  });
-  target.append(records);
-  // Only the backend decides whether quarters are comparable for a percent change.
-  if (signal.change_percent !== null) {
-    target.append(
-      element(
-        "p",
-        "market-change",
-        `Quarter-on-quarter change: ${signal.change_percent >= 0 ? "+" : ""}${signal.change_percent.toFixed(2)}%`,
-      ),
-    );
-  }
-  target.append(element("p", "field-help", signal.comparison_note));
 }
 
 // Preserve the backend's prerequisite order, cost notes and estimate/provider labels.
@@ -307,9 +226,9 @@ function renderLearningPath(match) {
   unavailable.replaceChildren();
   document.querySelector("#learning-career").textContent = match.career.career_name;
   document.querySelector("#learning-summary").textContent = path.missing_skill_count
-    ? `${path.covered_skill_count} of ${path.missing_skill_count} missing skills have learning resources · ` +
-      `${path.total_estimated_hours.toLocaleString("en", { maximumFractionDigits: 2 })} estimated study hours for listed resources.`
-    : "No missing skills in ORBI's curated subset. No additional learning steps are assigned.";
+    ? `${path.covered_skill_count}/${path.missing_skill_count} skill gaps covered · ` +
+      `${path.total_estimated_hours.toLocaleString("en", { maximumFractionDigits: 2 })} estimated hours`
+    : "No skill gaps in this catalogue.";
   const typeLabels = {
     course: "Course",
     module: "Module / selected sections",
@@ -348,36 +267,17 @@ function renderLearningPath(match) {
         `${course.estimated_hours} hours · ${course.duration_basis === "provider" ? "provider duration" : "ORBI estimate"}`,
       ),
     );
-    body.append(meta, sourceLink("Open learning resource ↗", course.course_url));
-    const details = element("details", "source-details");
-    details.append(
-      element("summary", "", "Scope, preparation & evidence"),
-      element("p", "", course.mapping_note),
-      element("p", "", course.duration_note),
-      element("p", "", course.cost_note),
-    );
+    body.append(meta, resourceLink("Open learning resource ↗", course.course_url));
     // Disclose preparation outside the plan without silently assigning extra courses.
     if (step.suggested_background_ids.length) {
       body.append(
         element(
           "p",
           "notice",
-          `Suggested background outside this plan: ${skillList(step.suggested_background_ids)}. These skills were not selected and are not covered by an earlier step.`,
+          `Additional preparation: ${skillList(step.suggested_background_ids)}`,
         ),
       );
     }
-    if (course.prerequisite_note) {
-      details.append(element("p", "", course.prerequisite_note));
-    }
-    course.supporting_urls.forEach((url, index) => {
-      const line = element("p");
-      line.append(sourceLink(`Companion material / source ${index + 1} ↗`, url));
-      details.append(line);
-    });
-    details.append(
-      element("p", "field-help", `Source checked: ${course.source_checked_at}`),
-    );
-    body.append(details);
     item.append(number, body);
     steps.append(item);
   });
@@ -392,26 +292,15 @@ function renderLearningPath(match) {
   });
 }
 
-// Pair ORBI's contribution rationale with the referenced official UN definitions.
+// Display SDG names and ORBI contribution rationales.
 function sdgCard(label, mapping) {
   const card = element("article", "sdg-card");
   card.append(element("h4", "", label));
   const goals = element("div", "sdg-goals");
   mapping.goals.forEach((goal) => {
-    goals.append(
-      sourceLink(`SDG ${goal.sdg_id} · ${goal.sdg_name} ↗`, goal.source_url),
-    );
+    goals.append(element("span", "", `SDG ${goal.sdg_id} · ${goal.sdg_name}`));
   });
   card.append(goals, element("p", "", mapping.explanation));
-  if (mapping.goals.length) {
-    card.append(
-      element(
-        "p",
-        "field-help",
-        `UN definitions checked: ${mapping.goals.map((g) => g.source_checked_at).join(", ")}`,
-      ),
-    );
-  }
   return card;
 }
 
@@ -456,11 +345,6 @@ function renderGap() {
       return row;
     }),
   );
-  document.querySelector("#evidence-note").textContent = match.career.evidence_note;
-  document
-    .querySelector("#required-trends")
-    .replaceChildren(...match.required_skill_trends.map(renderTrend));
-  renderMarket(match.market_signal);
   renderLearningPath(match);
   renderSDGs(match);
   clearInsight();
@@ -487,10 +371,7 @@ function renderResults(data, scroll = true) {
     .querySelector("#skill-trends")
     .replaceChildren(...supportedTrends.map(renderTrend));
   document.querySelector("#trend-coverage-summary").textContent =
-    `${supportedTrends.length} of ${data.skill_trends.length} selected skills have validated signals. ` +
-    (supportedTrends.length
-      ? "Review the metric and period in each evidence panel."
-      : "No direct trend evidence is available for your selection; career requirements may have additional evidence below.");
+    `${supportedTrends.length}/${data.skill_trends.length} skills with trend evidence`;
   document.querySelector("#unknown-trends-details").hidden = unknownTrends.length === 0;
   document.querySelector("#unknown-trends-summary").textContent =
     `${unknownTrends.length} selected skills awaiting direct evidence (Unknown)`;
@@ -515,7 +396,6 @@ function renderResults(data, scroll = true) {
   );
   document.querySelector("#gap-section").hidden = matches.length === 0;
   if (matches.length) renderGap();
-  document.querySelector("#market-section").hidden = matches.length === 0;
   document.querySelector("#learning-section").hidden = matches.length === 0;
   document.querySelector("#sdg-section").hidden = matches.length === 0;
   document.querySelector("#insight-section").hidden = matches.length === 0;
@@ -533,16 +413,6 @@ function renderResults(data, scroll = true) {
     .replaceChildren(
       ...data.excluded_records.map((message) => element("li", "", message)),
     );
-  // Make excluded or invalid evidence discoverable instead of hiding load problems.
-  const evidenceIssues = [
-    ...data.trend_issues,
-    ...data.market_issues,
-    ...data.course_issues,
-  ];
-  document.querySelector("#evidence-issues").hidden = evidenceIssues.length === 0;
-  document
-    .querySelector("#evidence-issues-list")
-    .replaceChildren(...evidenceIssues.map((issue) => element("li", "", issue)));
   status.textContent = matches.length
     ? `${matches.length} PATHS TO EXPLORE`
     : "PROFILE READY";
@@ -624,43 +494,6 @@ async function analyseProfile(scroll = true) {
   }
 }
 
-// Show immediate local feedback while waiting; clearly distinguish it from AI output.
-function showInstantSummary(match) {
-  const summary = element("section", "insight-result");
-  summary.append(
-    element("span", "small-tag", "LOCAL SUMMARY · CALCULATED"),
-    element("h4", "", match.career.career_name),
-    element(
-      "p",
-      "",
-      `Your selected skills cover ${match.match_score.toFixed(1)}% of ORBI's curated requirements. This is not employment probability.`,
-    ),
-    element(
-      "p",
-      "",
-      match.missing_skill_ids.length
-        ? `Skills to build: ${skillList(match.missing_skill_ids)}.`
-        : "No missing skills in this curated subset.",
-    ),
-  );
-  match.learning_path.steps.forEach((step) => {
-    const line = element("p");
-    line.append(
-      document.createTextNode(`Step ${step.sequence}: `),
-      sourceLink(step.course.course_name, step.course.course_url),
-    );
-    summary.append(line);
-  });
-  summary.append(
-    element(
-      "p",
-      "field-help",
-      "Calculated instantly from your results. Personal AI action proposals will replace this summary when ready.",
-    ),
-  );
-  document.querySelector("#insight-output").replaceChildren(summary);
-}
-
 // AI runs only on this explicit action. After success, another perspective gets
 // a fresh generation identifier to encourage a different project theme.
 insightButton.addEventListener("click", async () => {
@@ -672,7 +505,6 @@ insightButton.addEventListener("click", async () => {
   const variant = nextInsightVariant;
   clearInsight();
   nextInsightVariant = variant;
-  showInstantSummary(match);
   const version = insightVersion;
   const requestController = new AbortController();
   insightController = requestController;
@@ -680,7 +512,7 @@ insightButton.addEventListener("click", async () => {
   const message = document.querySelector("#insight-status");
   const output = document.querySelector("#insight-output");
   const started = Date.now();
-  const stageMessage = "Sending your sourced results to RunPod…";
+  const stageMessage = "Generating suggestions…";
   const progress = setInterval(() => {
     if (version === insightVersion) {
       message.textContent = `${stageMessage} · ${Math.floor((Date.now() - started) / 1000)}s elapsed`;
@@ -689,7 +521,7 @@ insightButton.addEventListener("click", async () => {
   insightButton.disabled = true;
   insightButton.textContent = "Generating insight…";
   output.setAttribute("aria-busy", "true");
-  message.textContent = "Sending your sourced results to RunPod…";
+  message.textContent = stageMessage;
   try {
     const response = await fetch("/api/insight", {
       method: "POST",
@@ -726,9 +558,11 @@ insightButton.addEventListener("click", async () => {
         panel.append(line);
       });
       panel.append(element("p", "field-help", `Skills: ${advice.skills.join(", ")}`));
-      const sources = element("div", "insight-sources");
+      const sources = element("div", "insight-resources");
       advice.sources.forEach((source) =>
-        sources.append(sourceLink(`Learning resource: ${source.label} ↗`, source.url)),
+        sources.append(
+          resourceLink(`Learning resource: ${source.label} ↗`, source.url),
+        ),
       );
       panel.append(sources);
       return panel;
@@ -737,13 +571,12 @@ insightButton.addEventListener("click", async () => {
     hasInsight = true;
     // A new perspective may incur a new inference charge only when clicked again.
     nextInsightVariant = crypto.randomUUID();
-    message.textContent = data.method;
+    message.textContent = "Ready";
     // Total direct API time includes network overhead; it is not model time alone.
     if (data.timings?.request_seconds !== undefined) {
-      message.textContent += ` Direct API request: ${data.timings.request_seconds}s.`;
+      message.textContent += ` · ${data.timings.request_seconds}s`;
     }
-    document.querySelector("#insight-model").textContent =
-      `Model: ${data.model} · ${data.model_source}`;
+    document.querySelector("#insight-model").textContent = `Model: ${data.model}`;
   } catch (error) {
     if (version === insightVersion) {
       message.textContent =
