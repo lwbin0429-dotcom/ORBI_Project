@@ -26,6 +26,8 @@ class TestWebApp(unittest.TestCase):
         for target in [
             "learning-section", "learning-summary", "learning-steps",
             "learning-unavailable",
+            "sdg-section", "career-sdg", "selected-sdgs", "required-sdgs",
+            "insight-section", "generate-insight", "insight-output",
         ]:
             self.assertIn(f'id="{target}"', html)
         for i in range(1, 6):

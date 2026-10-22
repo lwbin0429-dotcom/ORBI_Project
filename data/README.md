@@ -47,7 +47,8 @@ are made by Part 2.
   files are treated as catalogue errors.
 - Add or revise skills only with corresponding review of affected career mappings.
   New data is read on each analysis request; no external API calls are made while matching.
-- `sdg_ids` and `sdg_explanation` are reserved for Part 5 and currently blank.
+- `sdg_ids` and `sdg_explanation` hold curated Part 5 contribution mappings.
+  Every career and skill must have at least one goal and an explicit rationale.
 
 Part 2 ranking uses exact skill coverage. Part 3 adds sourced skill trend
 adjustments and Moderate/Fast estimates, then breaks ties with coverage, degree
@@ -74,3 +75,13 @@ See [course_methodology.md](course_methodology.md) for source scope, estimates,
 required fields, prerequisite ordering and the manual update process.
 These course mappings do not resolve the three remaining Part 3 trend-evidence
 gaps: a course's existence is not evidence that job demand is rising.
+
+## Part 5 SDG mappings
+
+All 15 careers and 22 skills have reviewed goal IDs and contribution rationales.
+`sdgs.csv` supplies official short goal names, UN definition URLs and source check
+dates for SDGs 4, 8, 9, 10 and 16. The explanations refer to relevant targets and
+state possible applications, not measured outcomes or UN endorsement. Recheck
+the goal definitions and the mapping together when editing either catalogue.
+Invalid or missing goal definitions produce unavailable mappings while leaving
+career matching functional. Details: [Part 5 setup](../docs/part5_setup.md).

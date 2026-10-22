@@ -1,14 +1,21 @@
 """Serve the ORBI HTML/CSS frontend and Python matching API."""
 
 import os
+import re
 from dataclasses import asdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 from flask import Flask, jsonify, render_template, request
+from dotenv import load_dotenv
 
 from career_matching import load_careers, rank_careers
 from learning_path import build_learning_path, load_courses
 from profile_data import load_catalogue, validate_profile
+from runpod_insight import (
+    InsightError, advice_constraints, generate_insight, poll_insight, public_status,
+)
+from sdg_data import describe_sdg, load_sdgs
 from trend_data import (
     SCENARIOS,
     TREND_CODES,
@@ -20,6 +27,7 @@ from trend_data import (
 
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+load_dotenv(DATA_DIR.parent / ".env", override=False)
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024
 
@@ -54,7 +62,11 @@ def index():
 
 @app.post("/api/analyse")
 def analyse():
-    payload = request.get_json(silent=True)
+    return analyse_payload(request.get_json(silent=True))
+
+
+def analyse_payload(payload):
+    """Recompute server-owned results for both analysis and AI requests."""
     if not isinstance(payload, dict):
         return jsonify(errors=["Send a valid JSON profile."]), 400
     degree_id = payload.get("degree_id")
@@ -88,6 +100,12 @@ def analyse():
 
     profile = {"degree_id": degree_id, "user_skill_ids": list(dict.fromkeys(skill_ids))}
     warnings = []
+    try:
+        goals = load_sdgs(DATA_DIR / "sdgs.csv")
+    except (OSError, ValueError):
+        goals = {}
+        warnings.append("SDG definitions are currently unavailable.")
+    skill_index = {row["skill_id"]: row for row in skills}
     skill_catalogue_ids = {row["skill_id"] for row in skills}
     course_issues = []
     try:
@@ -181,6 +199,20 @@ def analyse():
                     profile["user_skill_ids"],
                     courses,
                 ),
+                "sdg_mapping": describe_sdg(
+                    match.career.sdg_ids, match.career.sdg_explanation, goals,
+                ),
+                "required_skill_sdgs": [
+                    {
+                        "skill_id": sid,
+                        **describe_sdg(
+                            skill_index[sid]["sdg_ids"],
+                            skill_index[sid]["sdg_explanation"],
+                            goals,
+                        ),
+                    }
+                    for sid in match.career.required_skills
+                ],
             }
             for match in matches
         ],
@@ -196,7 +228,82 @@ def analyse():
         trend_issues=trend_issues,
         market_issues=market_issues,
         course_issues=course_issues,
+        selected_skill_sdgs=[
+            {
+                "skill_id": sid,
+                **describe_sdg(
+                    skill_index[sid]["sdg_ids"],
+                    skill_index[sid]["sdg_explanation"],
+                    goals,
+                ),
+            }
+            for sid in profile["user_skill_ids"]
+        ],
     )
+
+
+@app.get("/api/insight/status")
+def insight_status():
+    return jsonify(public_status())
+
+
+@app.post("/api/insight")
+def insight():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict) or not isinstance(payload.get("career_id"), str):
+        return jsonify(errors=["Choose a career from your current results."]), 400
+    variant = payload.get("request_variant", "initial")
+    if not isinstance(variant, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", variant):
+        return jsonify(errors=["Use a valid advice request identifier."]), 400
+    response = app.make_response(analyse_payload(payload))
+    if response.status_code != 200:
+        return response
+    analysis = response.get_json()
+    match = next(
+        (item for item in analysis["matches"]
+         if item["career"]["career_id"] == payload["career_id"]),
+        None,
+    )
+    if match is None:
+        return jsonify(errors=["Reanalyse and choose a current top-three career."]), 400
+    try:
+        degrees, skills = load_catalogue(DATA_DIR)
+    except (OSError, ValueError):
+        return jsonify(errors=["The skills catalogue is unavailable."]), 503
+    degree = next(
+        d for d in degrees if d["degree_id"] == analysis["profile"]["degree_id"]
+    )
+    selected = set(analysis["profile"]["user_skill_ids"])
+    context = {
+        "degree": degree,
+        "profile": analysis["profile"],
+        "selected_skills": [s for s in skills if s["skill_id"] in selected],
+        "scenario": analysis["scenario"],
+        "selected_career_result": match,
+        "warnings": analysis["warnings"],
+        "request_variant": variant,
+    }
+    try:
+        result = generate_insight(context, advice_constraints(analysis, match, skills))
+    except InsightError as error:
+        return jsonify(errors=[str(error)]), error.status
+    if result.get("pending"):
+        return jsonify(result), 202
+    return jsonify(
+        **result,
+        career_id=match["career"]["career_id"],
+        scenario=analysis["scenario"],
+        generated_at=datetime.now(timezone.utc).isoformat(),
+    )
+
+
+@app.get("/api/insight/jobs/<token>")
+def insight_job(token):
+    try:
+        result = poll_insight(token)
+    except InsightError as error:
+        return jsonify(errors=[str(error)]), error.status
+    return jsonify(result), 202 if result.get("pending") else 200
 
 
 if __name__ == "__main__":

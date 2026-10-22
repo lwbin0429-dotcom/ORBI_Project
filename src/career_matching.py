@@ -20,6 +20,8 @@ class Career:
     source_checked_at: str
     evidence_note: str
     skill_source_url: str
+    sdg_ids: tuple[str, ...] = ()
+    sdg_explanation: str = ""
 
 
 @dataclass(frozen=True)
@@ -126,6 +128,8 @@ def load_careers(
                 source_checked_at=row["source_checked_at"],
                 evidence_note=row["evidence_note"],
                 skill_source_url=row["skill_source_url"],
+                sdg_ids=_ids(row["sdg_ids"]),
+                sdg_explanation=row["sdg_explanation"],
             )
         )
     return careers, issues

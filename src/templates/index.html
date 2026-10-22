@@ -102,12 +102,35 @@
           <div class="orbit-axis"></div>
           <span class="satellite satellite-one"></span>
           <span class="satellite satellite-two"></span>
-          <div class="orbit-core">
-            <span class="core-mark">
-              O
-              <span>↗</span>
-            </span>
-            <span>YOUR NEXT CHAPTER</span>
+          <div class="ai-chip-frame">
+            <div class="ai-chip">
+              <div class="ai-chip-face ai-chip-front">
+                <svg
+                  class="ai-circuit"
+                  viewBox="0 0 200 200"
+                  fill="none"
+                  focusable="false"
+                >
+                  <path d="M20 58H45L58 45V20M100 12V38M180 58H155L142 45V20" />
+                  <path d="M20 142H45L58 155V180M100 188V162M180 142H155L142 155V180" />
+                  <path d="M12 100H36M164 100H188" />
+                  <circle cx="58" cy="20" r="4" />
+                  <circle cx="142" cy="20" r="4" />
+                  <circle cx="58" cy="180" r="4" />
+                  <circle cx="142" cy="180" r="4" />
+                </svg>
+                <span class="ai-chip-mark">AI</span>
+                <span class="ai-chip-caption">YOUR NEXT CHAPTER</span>
+              </div>
+              <div class="ai-chip-face ai-chip-back">
+                <span class="ai-chip-mark">AI</span>
+                <span class="ai-chip-caption">INTELLIGENCE IN MOTION</span>
+              </div>
+              <div class="ai-chip-side ai-chip-right"></div>
+              <div class="ai-chip-side ai-chip-left"></div>
+              <div class="ai-chip-side ai-chip-top"></div>
+              <div class="ai-chip-side ai-chip-bottom"></div>
+            </div>
           </div>
           <span class="orbit-label label-one">
             <i></i>
@@ -205,7 +228,8 @@
               <p>
                 No personal details or CV needed.
                 <br />
-                Your selections stay in this tab until you refresh or close it.
+                No profile is saved to disk. AI sharing starts only when you
+                choose Generate AI Insight.
               </p>
             </div>
           </aside>
@@ -540,6 +564,73 @@
               assumptions; provider durations are identified separately. Total
               time covers listed resources and excludes extra prerequisite study.
               Sources are manually checked and may change after the review date.
+            </p>
+          </section>
+          <section
+            id="sdg-section"
+            class="gap-panel"
+            aria-labelledby="sdg-title"
+            hidden
+          >
+            <p class="eyebrow">04 / PURPOSE IN PRACTICE</p>
+            <h3 id="sdg-title">Connect your skills to the SDGs</h3>
+            <p class="results-explainer">
+              These are ORBI interpretations of possible contributions, informed
+              by UN goal definitions. They are not UN endorsements or evidence
+              of measured impact; outcomes depend on the project and its users.
+            </p>
+            <div id="career-sdg"></div>
+            <details class="source-details">
+              <summary>SDGs for this career's required skills</summary>
+              <div
+                id="required-sdgs"
+                class="sdg-grid"
+              ></div>
+            </details>
+            <details class="source-details">
+              <summary>SDGs for your selected skills</summary>
+              <div
+                id="selected-sdgs"
+                class="sdg-grid"
+              ></div>
+            </details>
+          </section>
+          <section
+            id="insight-section"
+            class="gap-panel insight-panel"
+            aria-labelledby="insight-title"
+            hidden
+          >
+            <p class="eyebrow">05 / A GROUNDED PERSPECTIVE</p>
+            <h3 id="insight-title">Your AI career insight</h3>
+            <p class="results-explainer">
+              Get a portfolio idea, a practice task and interview preparation for
+              the career selected above. This sends
+              your degree, selected skills and sourced results to RunPod when
+              you click the button. AI proposes actions tailored to your skills;
+              resource links come from your verified learning path.
+            </p>
+            <p
+              id="insight-model"
+              class="field-help"
+            ></p>
+            <button
+              id="generate-insight"
+              class="button primary"
+              type="button"
+            >
+              Generate AI Insight
+            </button>
+            <p
+              id="insight-status"
+              class="field-help"
+              role="status"
+              aria-live="polite"
+            ></p>
+            <div id="insight-output"></div>
+            <p class="field-help">
+              Advice supports your decisions and does not make hiring decisions.
+              If RunPod is unavailable, your matches and learning path still work.
             </p>
           </section>
           <section

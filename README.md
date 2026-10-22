@@ -2,7 +2,7 @@
 
 > A career exploration and reskilling platform for students and graduates from five computing degree programmes.
 
-## Current implementation — Parts 1 to 4
+## Current implementation — Parts 1 to 5
 
 Part 1 provides an English-language HTML/CSS page for selecting one of the five supported
 degrees and multiple self-reported skills. Click **Analyse My Future** to validate
@@ -10,10 +10,13 @@ and confirm the profile. A degree and at least one skill are required. Changing
 either input clears the previous confirmation; submit again to confirm the new
 profile. Choosing a degree never automatically selects skills.
 
-Profiles stay in browser memory until the tab is refreshed or closed. The HTML/CSS
-frontend sends degree and skill IDs to a Flask API for validation and matching.
-No profile is written to disk, and no identity or CV is requested. Parts 1 to 4
-do not call RunPod or require API credentials.
+The HTML/CSS frontend sends degree and skill IDs to a Flask API for validation
+and matching. No profile is written to disk, and no identity or CV is requested.
+Analysis works without RunPod. Part 5 sends sourced results to RunPod only when
+the user clicks Generate AI Insight. Pending AI jobs and derived statements are
+cached in server process memory; job handles expire after 15 minutes and entries
+are cleared on subsequent job cleanup or server restart. RunPod also processes
+the submitted data under its own service policies.
 
 Part 2 ranks 15 sourced occupations from `data/careers.csv` and shows the top
 three (or fewer if fewer valid records exist). Each result includes skill coverage,
@@ -102,9 +105,55 @@ automatically update self-reported skills. A resource-file failure keeps matchin
 working and explicitly reports unavailable learning resources. See
 [course curation and learning-path rules](data/course_methodology.md).
 
-SDG columns remain reserved and empty until Part 5. RunPod AI
-explanations are not implemented yet. The remaining competition sections below
-are a submission template and still need to be completed.
+Part 5 maps all 15 careers and 22 skills to at least one SDG, with an explicit
+contribution rationale. `data/sdgs.csv` links goal names to official UN definitions.
+Mappings are ORBI interpretations, not UN endorsements or measured impacts.
+The page shows the chosen career, required skills and selected skills with links.
+
+Generate AI Insight recomputes all facts on the server, ignoring browser-supplied
+scores, courses or source claims. RunPod generates three personalised action
+proposals: a portfolio project, focused practice and interview preparation.
+Each includes an action, a deliverable, a success check and a reason tied to the
+profile. These are new AI proposals rather than summaries of the result panels.
+Python validates the structure and skill/resource references, and resolves all
+resource links from the current learning path. Prose is labelled as AI advice,
+not verified outcomes; these checks cannot prove every statement is correct.
+Unsupported output is withheld. The page discloses
+the returned model, or explicitly labels the deployment configuration if the
+worker does not report its model.
+
+The selected integration uses RunPod's pre-deployed **Kimi K2.6 Public
+Endpoint**, directly through its chat API. Only an account API key and credits
+are needed: no Pod or user-deployed Serverless endpoint is created. The app uses
+non-thinking mode and reports total API request time. This is shared hosted
+inference, so latency is still subject to provider capacity.
+
+The optional legacy queue integration submits once with `/run` and polls `/status` using an opaque
+local request token. Repeated identical requests reuse the same in-process job
+for 15 minutes. After success, **Generate another perspective** explicitly requests
+a fresh generation; additional inference may incur RunPod charges. Variety is
+encouraged, not guaranteed. Switching inputs clears stale UI output; it does not cancel the
+provider job. API, model and transport failures leave matching operational.
+The button shows an instant local summary while RunPod works, then replaces it
+with the validated AI explanation. Elapsed time, queue status and actual provider
+timings distinguish a cold-start wait from inference. Polling is about one to
+two seconds; compact prompts remove repeated analysis data. These changes do
+not eliminate provider queue delays or change cloud billing settings.
+The current Kimi integration passed a full synthetic advice request in 13.594
+seconds. This is one observation, not a latency guarantee; see
+[verification evidence](docs/part5_verification.md).
+
+For local AI use, copy `.env.example` to `.env` and set `RUNPOD_API_KEY`,
+`RUNPOD_MODEL=kimi-k2.6` and `RUNPOD_API_MODE=public`. No endpoint ID
+is needed in public mode. The app loads `.env`
+without overriding existing environment variables. `.env` is ignored by Git;
+Replit deployments should use Secrets. Keys are never sent to the browser.
+Use `serverless` or `openai` only for an optional user-deployed endpoint, with
+its own endpoint ID and model name. `runpod/handler.py` is an optional custom
+Serverless worker, not the Public Endpoint implementation.
+
+See [Part 5 setup and grounding](docs/part5_setup.md). The remaining competition
+sections below are a submission template and still need to be completed.
 
 ### Quick start
 
@@ -130,6 +179,8 @@ in a black and red theme.
 - `src/career_matching.py`: career validation, skill gaps and deterministic ranking.
 - `src/trend_data.py`: trend/market validation, evidence payloads and comparisons.
 - `src/learning_path.py`: resource validation and missing-skill learning paths.
+- `src/sdg_data.py`: official SDG definitions and curated mapping descriptions.
+- `src/runpod_insight.py`: private RunPod transport, queue handling and grounding.
 - `data/degrees.csv`: exactly five supported degree programmes.
 - `data/skills.csv`: editable computing skills catalogue.
 - `data/careers.csv`: 15 careers with required skills and source evidence.
@@ -138,6 +189,7 @@ in a black and red theme.
 - `data/trend_evidence_audit.md`: the complete 22-skill evidence and gap register.
 - `data/market_signals.csv`: two DOSM quarterly observations for Software Developers.
 - `data/courses.csv`: 22 reviewed course/module/tutorial mappings.
+- `data/sdgs.csv`: five referenced UN goal definitions and review dates.
 - `data/course_methodology.md`: resource scope, estimates and update rules.
 - `data/trend_methodology.md`: Part 3 sources, calculations and update process.
 - `data/README.md`: data provenance and editing rules.
@@ -146,6 +198,7 @@ in a black and red theme.
 - `tests/test_web.py`: page, assets, API validation and matching responses.
 - `tests/test_trends.py`: scenarios, evidence validation, fallback and reload checks.
 - `tests/test_learning_path.py`: resource validation, ordering, gaps and reload checks.
+- `tests/test_part5.py`: SDG completeness, grounding, credentials and queue handling.
 
 Run checks with `python -m unittest discover tests` after installing dependencies.
 

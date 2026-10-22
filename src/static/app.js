@@ -19,6 +19,48 @@ const status = document.querySelector("#results-status");
 let matches = [];
 let requestVersion = 0;
 let controller = null;
+let analysisData = null;
+let insightVersion = 0;
+let insightController = null;
+let insightConfig = null;
+let nextInsightVariant = "initial";
+let hasInsight = false;
+const insightButton = document.querySelector("#generate-insight");
+
+function clearInsight() {
+  nextInsightVariant = "initial";
+  hasInsight = false;
+  insightVersion += 1;
+  if (insightController) insightController.abort();
+  insightController = null;
+  insightButton.disabled = insightConfig?.configured === false;
+  insightButton.textContent = "Generate AI Insight";
+  document.querySelector("#insight-output").replaceChildren();
+  document.querySelector("#insight-output").setAttribute("aria-busy", "false");
+  document.querySelector("#insight-status").textContent =
+    insightConfig?.configured === false
+      ? insightConfig.message
+      : "Generate an insight for the current career when you are ready.";
+}
+
+async function checkInsightConfiguration() {
+  try {
+    const response = await fetch("/api/insight/status");
+    if (!response.ok) return;
+    insightConfig = await response.json();
+    document.querySelector("#insight-model").textContent = insightConfig.configured
+      ? `Configured model: ${insightConfig.model} · RunPod ${insightConfig.mode}`
+      : insightConfig.message;
+    if (!insightController) {
+      insightButton.disabled = !insightConfig.configured;
+    }
+  } catch {
+    document.querySelector("#insight-model").textContent =
+      "Model configuration could not be checked. You can try generating an insight.";
+  }
+}
+
+checkInsightConfiguration();
 
 function element(tag, className, text) {
   const node = document.createElement(tag);
@@ -38,6 +80,8 @@ function showErrors(messages) {
 }
 
 function resetResults() {
+  clearInsight();
+  analysisData = null;
   requestVersion += 1;
   if (controller) controller.abort();
   controller = null;
@@ -325,6 +369,41 @@ function renderLearningPath(match) {
   });
 }
 
+function sdgCard(label, mapping) {
+  const card = element("article", "sdg-card");
+  card.append(element("h4", "", label));
+  const goals = element("div", "sdg-goals");
+  mapping.goals.forEach((goal) => {
+    goals.append(
+      sourceLink(`SDG ${goal.sdg_id} · ${goal.sdg_name} ↗`, goal.source_url),
+    );
+  });
+  card.append(goals, element("p", "", mapping.explanation));
+  if (mapping.goals.length) {
+    card.append(
+      element(
+        "p",
+        "field-help",
+        `UN definitions checked: ${mapping.goals.map((g) => g.source_checked_at).join(", ")}`,
+      ),
+    );
+  }
+  return card;
+}
+
+function renderSDGs(match) {
+  document
+    .querySelector("#career-sdg")
+    .replaceChildren(sdgCard(match.career.career_name, match.sdg_mapping));
+  document
+    .querySelector("#required-sdgs")
+    .replaceChildren(
+      ...match.required_skill_sdgs.map((mapping) =>
+        sdgCard(skillNames.get(mapping.skill_id), mapping),
+      ),
+    );
+}
+
 function renderGap() {
   const match = matches.find(
     (item) => item.career.career_id === document.querySelector("#career-select").value,
@@ -357,11 +436,14 @@ function renderGap() {
     .replaceChildren(...match.required_skill_trends.map(renderTrend));
   renderMarket(match.market_signal);
   renderLearningPath(match);
+  renderSDGs(match);
+  clearInsight();
 }
 
 document.querySelector("#career-select").addEventListener("change", renderGap);
 
 function renderResults(data, scroll = true) {
+  analysisData = data;
   matches = data.matches;
   document.querySelector(`#scenario-${data.scenario}`).checked = true;
   document.querySelector("#scenario-state").textContent = data.trends_available
@@ -407,6 +489,15 @@ function renderResults(data, scroll = true) {
   if (matches.length) renderGap();
   document.querySelector("#market-section").hidden = matches.length === 0;
   document.querySelector("#learning-section").hidden = matches.length === 0;
+  document.querySelector("#sdg-section").hidden = matches.length === 0;
+  document.querySelector("#insight-section").hidden = matches.length === 0;
+  document
+    .querySelector("#selected-sdgs")
+    .replaceChildren(
+      ...data.selected_skill_sdgs.map((mapping) =>
+        sdgCard(skillNames.get(mapping.skill_id), mapping),
+      ),
+    );
   document.querySelector("#excluded-details").hidden =
     data.excluded_records.length === 0;
   document
@@ -438,6 +529,9 @@ function renderResults(data, scroll = true) {
 }
 
 async function analyseProfile(scroll = true) {
+  clearInsight();
+  analysisData = null;
+  insightButton.disabled = true;
   const selected = checkboxes
     .filter((input) => input.checked)
     .map((input) => input.value);
@@ -498,6 +592,168 @@ async function analyseProfile(scroll = true) {
     }
   }
 }
+
+function showInstantSummary(match) {
+  const summary = element("section", "insight-result");
+  summary.append(
+    element("span", "small-tag", "LOCAL SUMMARY · CALCULATED"),
+    element("h4", "", match.career.career_name),
+    element(
+      "p",
+      "",
+      `Your selected skills cover ${match.match_score.toFixed(1)}% of ORBI's curated requirements. This is not employment probability.`,
+    ),
+    element(
+      "p",
+      "",
+      match.missing_skill_ids.length
+        ? `Skills to build: ${skillList(match.missing_skill_ids)}.`
+        : "No missing skills in this curated subset.",
+    ),
+  );
+  match.learning_path.steps.forEach((step) => {
+    const line = element("p");
+    line.append(
+      document.createTextNode(`Step ${step.sequence}: `),
+      sourceLink(step.course.course_name, step.course.course_url),
+    );
+    summary.append(line);
+  });
+  summary.append(
+    element(
+      "p",
+      "field-help",
+      "Calculated instantly from your results. Personal AI action proposals will replace this summary when ready.",
+    ),
+  );
+  document.querySelector("#insight-output").replaceChildren(summary);
+}
+
+insightButton.addEventListener("click", async () => {
+  if (!analysisData) return;
+  const match = matches.find(
+    (item) => item.career.career_id === document.querySelector("#career-select").value,
+  );
+  if (!match) return;
+  const variant = nextInsightVariant;
+  clearInsight();
+  nextInsightVariant = variant;
+  showInstantSummary(match);
+  const version = insightVersion;
+  const requestController = new AbortController();
+  insightController = requestController;
+  const timeout = setTimeout(() => requestController.abort(), 600000);
+  const message = document.querySelector("#insight-status");
+  const output = document.querySelector("#insight-output");
+  const started = Date.now();
+  let stageMessage = "Sending your sourced results to RunPod…";
+  const progress = setInterval(() => {
+    if (version === insightVersion) {
+      message.textContent = `${stageMessage} · ${Math.floor((Date.now() - started) / 1000)}s elapsed`;
+    }
+  }, 1000);
+  insightButton.disabled = true;
+  insightButton.textContent = "Generating insight…";
+  output.setAttribute("aria-busy", "true");
+  message.textContent = "Sending your sourced results to RunPod…";
+  try {
+    let response = await fetch("/api/insight", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...analysisData.profile,
+        scenario: analysisData.scenario,
+        career_id: document.querySelector("#career-select").value,
+        request_variant: variant,
+      }),
+      signal: requestController.signal,
+    });
+    let data = await response.json();
+    while (response.status === 202) {
+      if (version !== insightVersion) return;
+      if (requestController.signal.aborted) {
+        throw new DOMException("AI wait timed out", "AbortError");
+      }
+      stageMessage = data.message;
+      message.textContent = stageMessage;
+      const pollDelay = Math.min(5000, Math.max(750, data.poll_after_ms || 2000));
+      await new Promise((resolve) => setTimeout(resolve, pollDelay));
+      if (version !== insightVersion) return;
+      if (requestController.signal.aborted) {
+        throw new DOMException("AI wait timed out", "AbortError");
+      }
+      response = await fetch(
+        `/api/insight/jobs/${encodeURIComponent(data.request_token)}`,
+        {
+          signal: requestController.signal,
+        },
+      );
+      data = await response.json();
+    }
+    if (version !== insightVersion) return;
+    if (!response.ok) {
+      message.textContent = (data.errors || ["AI insight is unavailable."]).join(" ");
+      return;
+    }
+    const panels = data.recommendations.map((advice) => {
+      const panel = element("section", "insight-result");
+      panel.append(
+        element("span", "small-tag", `AI PROPOSAL · ${advice.category}`),
+        element("h4", "", advice.title),
+      );
+      [
+        ["Try this", advice.action],
+        ["Create", advice.deliverable],
+        ["Check your work", advice.success_check],
+        ["Why it fits you", advice.reason],
+      ].forEach(([label, text]) => {
+        const line = element("p");
+        line.append(element("strong", "", `${label}: `), document.createTextNode(text));
+        panel.append(line);
+      });
+      panel.append(element("p", "field-help", `Skills: ${advice.skills.join(", ")}`));
+      const sources = element("div", "insight-sources");
+      advice.sources.forEach((source) =>
+        sources.append(sourceLink(`Learning resource: ${source.label} ↗`, source.url)),
+      );
+      panel.append(sources);
+      return panel;
+    });
+    output.replaceChildren(...panels);
+    hasInsight = true;
+    nextInsightVariant = crypto.randomUUID();
+    message.textContent = data.method;
+    if (data.timings?.queue_seconds !== undefined) {
+      message.textContent += ` RunPod waiting: ${data.timings.queue_seconds}s.`;
+    }
+    if (data.timings?.generation_seconds !== undefined) {
+      message.textContent += ` Generation: ${data.timings.generation_seconds}s.`;
+    }
+    if (data.timings?.request_seconds !== undefined) {
+      message.textContent += ` Direct API request: ${data.timings.request_seconds}s.`;
+    }
+    document.querySelector("#insight-model").textContent =
+      `Model: ${data.model} · ${data.model_source}`;
+  } catch (error) {
+    if (version === insightVersion) {
+      message.textContent =
+        error.name === "AbortError"
+          ? "The AI wait timed out. No new job was submitted; check RunPod before retrying."
+          : "AI insight could not be loaded. Your career results remain available.";
+    }
+  } finally {
+    clearInterval(progress);
+    clearTimeout(timeout);
+    if (version === insightVersion) {
+      insightController = null;
+      insightButton.disabled = insightConfig?.configured === false;
+      insightButton.textContent = hasInsight
+        ? "Generate another perspective"
+        : "Generate AI Insight";
+      output.setAttribute("aria-busy", "false");
+    }
+  }
+});
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();

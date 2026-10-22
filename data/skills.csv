@@ -1,23 +1,23 @@
 skill_id,skill_name,sdg_ids,sdg_explanation
-S01,Python,,
-S02,Java,,
-S03,JavaScript,,
-S04,HTML & CSS,,
-S05,SQL,,
-S06,Git & Version Control,,
-S07,Data Structures & Algorithms,,
-S08,Software Testing,,
-S09,API Development,,
-S10,UI/UX Design,,
-S11,Computer Graphics,,
-S12,3D Modelling,,
-S13,Data Analysis,,
-S14,Statistics,,
-S15,Data Visualisation,,
-S16,Machine Learning,,
-S17,Database Design,,
-S18,Computer Networks,,
-S19,Linux,,
-S20,Cloud Computing,,
-S21,Network Security,,
-S22,Security Risk Assessment,,
+S01,Python,8;9,"Python can support automation and research tooling, connecting to technological upgrading (8.2) and research capability (9.5) when used for those purposes."
+S02,Java,8,"Java can support maintainable business applications and process automation, contributing to technological upgrading under target 8.2 when responsibly deployed."
+S03,JavaScript,9,"JavaScript can make web-based information and services usable through browsers, supporting ICT access under target 9.c when access barriers are addressed."
+S04,HTML & CSS,9;10,Accessible HTML and CSS can reduce barriers to digital information (9.c) and participation for people with different abilities (10.2); accessibility must be designed and tested.
+S05,SQL,9,"SQL supports reliable retrieval of research and operational data, which can enable evidence-based innovation under target 9.5; data quality and governance remain necessary."
+S06,Git & Version Control,9,"Git supports traceable collaboration and reproducible research software, which can strengthen research and innovation capability under target 9.5."
+S07,Data Structures & Algorithms,9,"Algorithms and data structures support efficient research and engineering software, contributing to scientific and technological capability under target 9.5."
+S08,Software Testing,9,"Software testing can improve the reliability of digital systems used in infrastructure, supporting resilience under target 9.1 when applied to relevant services."
+S09,API Development,9,"API development can connect digital services and information systems, supporting useful ICT access under target 9.c when interfaces are secure and accessible."
+S10,UI/UX Design,10,"User-centred and accessible interface design can reduce participation barriers for diverse users, supporting inclusion under target 10.2 when validated with those users."
+S11,Computer Graphics,4;9,"Computer graphics can communicate technical concepts in learning materials (4.4) and visualise scientific models for research (9.5), depending on the project."
+S12,3D Modelling,9,"3D modelling can support engineering prototypes and simulation, contributing to research and innovation capability under target 9.5 in relevant projects."
+S13,Data Analysis,9;16,"Data analysis can support scientific investigation (9.5) and scrutiny of institutional performance (16.6), provided the data is appropriate and conclusions are accountable."
+S14,Statistics,9,"Statistics supports uncertainty-aware scientific analysis and evaluation, contributing to stronger research capability under target 9.5."
+S15,Data Visualisation,16,"Clear and accessible data visualisation can help people scrutinise institutional performance, supporting transparency under target 16.6 when the underlying data is sound."
+S16,Machine Learning,9,Machine learning can support research and technological experimentation under target 9.5; responsible evaluation is required and social benefit is not automatic.
+S17,Database Design,9,"Database design can improve the integrity and reliability of information systems supporting infrastructure, linking to resilience under target 9.1."
+S18,Computer Networks,9,Computer networking can support access to ICT services under target 9.c; affordability and equitable deployment determine whether access actually improves.
+S19,Linux,9,"Linux administration can help maintain dependable computing services used by infrastructure and research, linking to targets 9.1 and 9.5."
+S20,Cloud Computing,9,Cloud computing can support scalable digital services and research infrastructure under targets 9.1 and 9.5 when resilience and access are explicitly addressed.
+S21,Network Security,9;16,Network security can protect continuity of digital infrastructure (9.1) and safeguard institutional information systems (16.6); controls must be appropriate and reviewed.
+S22,Security Risk Assessment,16,"Security risk assessment can make institutional technology decisions more accountable through documented risks and controls, supporting target 16.6."
