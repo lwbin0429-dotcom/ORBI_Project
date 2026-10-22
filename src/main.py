@@ -7,6 +7,7 @@ from pathlib import Path
 from flask import Flask, jsonify, render_template, request
 
 from career_matching import load_careers, rank_careers
+from learning_path import build_learning_path, load_courses
 from profile_data import load_catalogue, validate_profile
 from trend_data import (
     SCENARIOS,
@@ -88,6 +89,18 @@ def analyse():
     profile = {"degree_id": degree_id, "user_skill_ids": list(dict.fromkeys(skill_ids))}
     warnings = []
     skill_catalogue_ids = {row["skill_id"] for row in skills}
+    course_issues = []
+    try:
+        courses, course_issues = load_courses(
+            DATA_DIR / "courses.csv",
+            skill_catalogue_ids,
+        )
+    except (OSError, ValueError):
+        courses = []
+        warnings.append(
+            "Learning resources are currently unavailable. "
+            "Career matching and skill gaps remain available."
+        )
     trend_issues = []
     try:
         trends, trend_issues = load_trends(
@@ -163,6 +176,11 @@ def analyse():
                     match.career.career_id,
                     market_signals,
                 ),
+                "learning_path": build_learning_path(
+                    match.missing_skill_ids,
+                    profile["user_skill_ids"],
+                    courses,
+                ),
             }
             for match in matches
         ],
@@ -177,6 +195,7 @@ def analyse():
         ],
         trend_issues=trend_issues,
         market_issues=market_issues,
+        course_issues=course_issues,
     )
 
 

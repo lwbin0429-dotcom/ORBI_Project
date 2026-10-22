@@ -1649,3 +1649,66 @@ td:last-child {
     transition: none !important;
   }
 }
+/* Ordered reskilling resources for the selected career. */
+.learning-summary {
+  margin: 1.5rem 0;
+  color: #f1f1f3;
+  font-weight: 600;
+}
+
+.learning-steps {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.learning-step {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid #34343b;
+  border-radius: 12px;
+  background: #141417;
+}
+
+.learning-number {
+  color: #ff4855;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.learning-body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.learning-body h4 {
+  margin: 0.5rem 0;
+  font-size: 1.15rem;
+  line-height: 1.5;
+}
+
+.learning-provider {
+  color: #b6b6c0;
+}
+
+.learning-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  font-size: 0.85rem;
+}
+
+.learning-body > a {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  color: #ff6570;
+}
+
+.learning-body .source-details {
+  margin-top: 0.5rem;
+}

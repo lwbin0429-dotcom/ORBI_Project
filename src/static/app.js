@@ -233,6 +233,98 @@ function renderMarket(signal) {
   target.append(element("p", "field-help", signal.comparison_note));
 }
 
+function renderLearningPath(match) {
+  const path = match.learning_path;
+  const steps = document.querySelector("#learning-steps");
+  const unavailable = document.querySelector("#learning-unavailable");
+  steps.replaceChildren();
+  unavailable.replaceChildren();
+  document.querySelector("#learning-career").textContent = match.career.career_name;
+  document.querySelector("#learning-summary").textContent = path.missing_skill_count
+    ? `${path.covered_skill_count} of ${path.missing_skill_count} missing skills have learning resources · ` +
+      `${path.total_estimated_hours.toLocaleString("en", { maximumFractionDigits: 2 })} estimated study hours for listed resources.`
+    : "No missing skills in ORBI's curated subset. No additional learning steps are assigned.";
+  const typeLabels = {
+    course: "Course",
+    module: "Module / selected sections",
+    tutorial: "Tutorial",
+  };
+  const costLabels = {
+    free: "Free learning content",
+    paid: "Paid learning content",
+    free_content_paid_certificate: "Free content · paid certificate option",
+  };
+  path.steps.forEach((step) => {
+    const course = step.course;
+    const item = element("li", "learning-step");
+    const number = element(
+      "span",
+      "learning-number",
+      String(step.sequence).padStart(2, "0"),
+    );
+    number.setAttribute("aria-hidden", "true");
+    const body = element("div", "learning-body");
+    body.append(
+      element("p", "eyebrow", skillNames.get(course.skill_id)),
+      element("h4", "", course.course_name),
+      element(
+        "p",
+        "learning-provider",
+        `${course.provider} · ${typeLabels[course.resource_type]}`,
+      ),
+    );
+    const meta = element("p", "learning-meta");
+    meta.append(
+      element("span", "small-tag", costLabels[course.cost_type]),
+      element(
+        "span",
+        "",
+        `${course.estimated_hours} hours · ${course.duration_basis === "provider" ? "provider duration" : "ORBI estimate"}`,
+      ),
+    );
+    body.append(meta, sourceLink("Open learning resource ↗", course.course_url));
+    const details = element("details", "source-details");
+    details.append(
+      element("summary", "", "Scope, preparation & evidence"),
+      element("p", "", course.mapping_note),
+      element("p", "", course.duration_note),
+      element("p", "", course.cost_note),
+    );
+    if (step.suggested_background_ids.length) {
+      body.append(
+        element(
+          "p",
+          "notice",
+          `Suggested background outside this plan: ${skillList(step.suggested_background_ids)}. These skills were not selected and are not covered by an earlier step.`,
+        ),
+      );
+    }
+    if (course.prerequisite_note) {
+      details.append(element("p", "", course.prerequisite_note));
+    }
+    course.supporting_urls.forEach((url, index) => {
+      const line = element("p");
+      line.append(sourceLink(`Companion material / source ${index + 1} ↗`, url));
+      details.append(line);
+    });
+    details.append(
+      element("p", "field-help", `Source checked: ${course.source_checked_at}`),
+    );
+    body.append(details);
+    item.append(number, body);
+    steps.append(item);
+  });
+  path.unavailable.forEach((record) => {
+    unavailable.append(
+      element(
+        "p",
+        "notice",
+        `${skillNames.get(record.skill_id) || record.skill_id}: ${record.reason}`,
+      ),
+    );
+  });
+}
+
 function renderGap() {
   const match = matches.find(
     (item) => item.career.career_id === document.querySelector("#career-select").value,
@@ -264,6 +356,7 @@ function renderGap() {
     .querySelector("#required-trends")
     .replaceChildren(...match.required_skill_trends.map(renderTrend));
   renderMarket(match.market_signal);
+  renderLearningPath(match);
 }
 
 document.querySelector("#career-select").addEventListener("change", renderGap);
@@ -313,6 +406,7 @@ function renderResults(data, scroll = true) {
   document.querySelector("#gap-section").hidden = matches.length === 0;
   if (matches.length) renderGap();
   document.querySelector("#market-section").hidden = matches.length === 0;
+  document.querySelector("#learning-section").hidden = matches.length === 0;
   document.querySelector("#excluded-details").hidden =
     data.excluded_records.length === 0;
   document
@@ -320,7 +414,11 @@ function renderResults(data, scroll = true) {
     .replaceChildren(
       ...data.excluded_records.map((message) => element("li", "", message)),
     );
-  const evidenceIssues = [...data.trend_issues, ...data.market_issues];
+  const evidenceIssues = [
+    ...data.trend_issues,
+    ...data.market_issues,
+    ...data.course_issues,
+  ];
   document.querySelector("#evidence-issues").hidden = evidenceIssues.length === 0;
   document
     .querySelector("#evidence-issues-list")

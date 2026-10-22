@@ -23,6 +23,11 @@ class TestWebApp(unittest.TestCase):
         html = response.get_data(as_text=True)
         self.assertIn('<html lang="en">', html)
         self.assertIn('id="profile-form"', html)
+        for target in [
+            "learning-section", "learning-summary", "learning-steps",
+            "learning-unavailable",
+        ]:
+            self.assertIn(f'id="{target}"', html)
         for i in range(1, 6):
             self.assertIn(f'<option value="D{i}">', html)
         self.assertEqual(html.count('name="skill_ids"'), 22)

@@ -2,7 +2,7 @@
 
 > A career exploration and reskilling platform for students and graduates from five computing degree programmes.
 
-## Current implementation — Parts 1 to 3
+## Current implementation — Parts 1 to 4
 
 Part 1 provides an English-language HTML/CSS page for selecting one of the five supported
 degrees and multiple self-reported skills. Click **Analyse My Future** to validate
@@ -12,7 +12,7 @@ profile. Choosing a degree never automatically selects skills.
 
 Profiles stay in browser memory until the tab is refreshed or closed. The HTML/CSS
 frontend sends degree and skill IDs to a Flask API for validation and matching.
-No profile is written to disk, and no identity or CV is requested. Parts 1 to 3
+No profile is written to disk, and no identity or CV is requested. Parts 1 to 4
 do not call RunPod or require API credentials.
 
 Part 2 ranks 15 sourced occupations from `data/careers.csv` and shows the top
@@ -85,7 +85,24 @@ career has 25% coverage, 22.5 Moderate score and 20 Fast score in the reviewed
 snapshot. To see DOSM evidence, select Python, SQL and Git & Version Control,
 then explore Software Developers. These are fictional demo skill profiles.
 
-SDG columns remain reserved and empty until Part 5. Courses and RunPod AI
+Part 4 builds an ordered learning path for the selected career's missing skills
+from `data/courses.csv`. There are 22 reviewed resource records, one per skill,
+including courses, modules and tutorials. All current resources offer free
+learning content; account requirements and separate certificate costs are
+disclosed. A resource provides a starting point, not proof of skill mastery.
+The page shows provider, links, cost notes, estimated hours, mapping scope and
+source check date. Provider durations and ORBI planning estimates are labelled
+separately. Compound steps link every included section.
+
+Only missing required skills create steps. Applicable prerequisite steps come
+first; background outside the career's gap is reported without silently adding
+extra tasks. Changing the career updates the plan; editing the profile requires
+analysis again. No progress is persisted and completing a resource does not
+automatically update self-reported skills. A resource-file failure keeps matching
+working and explicitly reports unavailable learning resources. See
+[course curation and learning-path rules](data/course_methodology.md).
+
+SDG columns remain reserved and empty until Part 5. RunPod AI
 explanations are not implemented yet. The remaining competition sections below
 are a submission template and still need to be completed.
 
@@ -112,6 +129,7 @@ in a black and red theme.
 - `src/profile_data.py`: CSV loading and input validation.
 - `src/career_matching.py`: career validation, skill gaps and deterministic ranking.
 - `src/trend_data.py`: trend/market validation, evidence payloads and comparisons.
+- `src/learning_path.py`: resource validation and missing-skill learning paths.
 - `data/degrees.csv`: exactly five supported degree programmes.
 - `data/skills.csv`: editable computing skills catalogue.
 - `data/careers.csv`: 15 careers with required skills and source evidence.
@@ -119,12 +137,15 @@ in a black and red theme.
 - `data/trend_observations.csv`: 15 raw UK advert-share observations for 13 skills.
 - `data/trend_evidence_audit.md`: the complete 22-skill evidence and gap register.
 - `data/market_signals.csv`: two DOSM quarterly observations for Software Developers.
+- `data/courses.csv`: 22 reviewed course/module/tutorial mappings.
+- `data/course_methodology.md`: resource scope, estimates and update rules.
 - `data/trend_methodology.md`: Part 3 sources, calculations and update process.
 - `data/README.md`: data provenance and editing rules.
 - `tests/test_profile.py`: profile validation and data integrity checks.
 - `tests/test_career_matching.py`: scoring, sorting and invalid records.
 - `tests/test_web.py`: page, assets, API validation and matching responses.
 - `tests/test_trends.py`: scenarios, evidence validation, fallback and reload checks.
+- `tests/test_learning_path.py`: resource validation, ordering, gaps and reload checks.
 
 Run checks with `python -m unittest discover tests` after installing dependencies.
 

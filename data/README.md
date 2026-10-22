@@ -61,3 +61,16 @@ unverified. Raw UK advert shares and counts are retained in
 recruitment sample; they do not establish Malaysian demand or AI causation.
 Update the raw observations and trend explanation together after reviewing the
 online source. A CSV edit is not automatic online synchronisation.
+
+## Part 4 learning resources
+
+`courses.csv` contains 22 resource-to-skill mappings reviewed on 22 October 2026.
+Every catalogue skill has a starting resource. Records distinguish complete
+courses, modules/selected sections and tutorials. All current entries have free
+learning content; optional certificates and account requirements are disclosed.
+Provider durations and ORBI planning estimates are explicitly separated.
+
+See [course_methodology.md](course_methodology.md) for source scope, estimates,
+required fields, prerequisite ordering and the manual update process.
+These course mappings do not resolve the three remaining Part 3 trend-evidence
+gaps: a course's existence is not evidence that job demand is rising.
