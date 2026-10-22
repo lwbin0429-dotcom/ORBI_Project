@@ -16,7 +16,7 @@ from career_matching import load_careers, rank_careers
 from learning_path import build_learning_path, load_courses
 from profile_data import load_catalogue, validate_profile
 from runpod_insight import (
-    InsightError, advice_constraints, generate_insight, poll_insight, public_status,
+    InsightError, advice_constraints, generate_insight, public_status,
 )
 from sdg_data import describe_sdg, load_sdgs
 from trend_data import (
@@ -296,36 +296,20 @@ def insight():
     # Send catalogue-backed context, without credentials or arbitrary client content.
     context = {
         "degree": degree,
-        "profile": analysis["profile"],
         "selected_skills": [s for s in skills if s["skill_id"] in selected],
-        "scenario": analysis["scenario"],
         "selected_career_result": match,
-        "warnings": analysis["warnings"],
         "request_variant": variant,
     }
     try:
         result = generate_insight(context, advice_constraints(analysis, match, skills))
     except InsightError as error:
         return jsonify(errors=[str(error)]), error.status
-    # Legacy queue mode returns a token; the current public chat API returns advice.
-    if result.get("pending"):
-        return jsonify(result), 202
     return jsonify(
         **result,
         career_id=match["career"]["career_id"],
         scenario=analysis["scenario"],
         generated_at=datetime.now(timezone.utc).isoformat(),
     )
-
-
-# Legacy compatibility: poll a server-issued token, never a browser-supplied URL.
-@app.get("/api/insight/jobs/<token>")
-def insight_job(token):
-    try:
-        result = poll_insight(token)
-    except InsightError as error:
-        return jsonify(errors=[str(error)]), error.status
-    return jsonify(result), 202 if result.get("pending") else 200
 
 
 # Local default: loopback only. Replit supplies HOST=0.0.0.0 and PORT=8000.

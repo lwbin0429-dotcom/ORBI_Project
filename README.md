@@ -78,11 +78,6 @@ trustworthy, hallucination-resistant career guidance.
 ```
 .
 ├── data/                    # Degree, skill, career, trend and course catalogues
-├── runpod/
-│   └── handler.py           # Optional legacy worker; not used by the public API
-├── scripts/
-│   ├── check_runpod.py      # Connection check and opt-in synthetic inference test
-│   └── diagnose_runpod.py   # Minimal API diagnostics
 ├── src/
 │   ├── main.py              # Flask application entry point and API routes
 │   ├── profile_data.py      # Catalogue loading and profile validation
@@ -91,7 +86,6 @@ trustworthy, hallucination-resistant career guidance.
 │   ├── learning_path.py     # Prerequisite-aware learning paths
 │   ├── sdg_data.py          # SDG definitions and contribution mappings
 │   ├── runpod_insight.py    # Kimi API requests and advice validation
-│   ├── utils.py             # Helper functions
 │   ├── templates/
 │   │   └── index.html       # English HTML/Jinja interface
 │   └── static/
@@ -101,7 +95,6 @@ trustworthy, hallucination-resistant career guidance.
 │   ├── REPLIT PROOF OF USE.pdf
 │   ├── RUNPOD PROOF OF USE.pdf
 │   └── Submission Template SDC Hackathon.pdf
-├── tests/                   # Profile, matching, trends, learning, SDG and API tests
 ├── .env.example             # Example environment variables
 ├── .gitignore
 ├── .replit                  # Replit run configuration
@@ -159,14 +152,6 @@ python src/main.py
 Open http://127.0.0.1:8000. On Windows PowerShell, use
 `Copy-Item .env.example .env` instead of `cp`. Restart Flask after editing `.env`.
 
-### Run Tests
-
-```bash
-python -m unittest discover tests
-```
-
-The latest local run passed 71 tests. AI requests are mocked during these tests.
-
 ---
 
 ## How We Use Replit *(Required)*
@@ -185,7 +170,7 @@ The latest local run passed 71 tests. AI requests are mocked during these tests.
 - **Workload:** Kimi K2.6 generates personalized portfolio projects, practice
   tasks and interview preparation with deliverables and success checks.
 - **Setup:** ORBI calls RunPod's pre-deployed Public Endpoint. No Pod or
-  user-owned Serverless endpoint is created, and `runpod/handler.py` is not deployed.
+  user-owned Serverless endpoint is required.
 - **Integration:** Flask sends the recomputed profile and approved skill/resource
   references using `RUNPOD_API_KEY`, `RUNPOD_MODEL=kimi-k2.6` and
   `RUNPOD_API_MODE=public`. Python validates the response and resolves course links.

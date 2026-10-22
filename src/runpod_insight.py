@@ -1,14 +1,11 @@
 """Generate personal action proposals with server-owned skill/resource references."""
 
 # Current path: Kimi Public Endpoint -> JSON decoding -> reference/schema checks.
-# Optional legacy modes retain queue polling; they do not run in public chat mode.
 # Keys are read on the server and are never included in browser response payloads.
 
-import hashlib
 import json
 import os
 import re
-import secrets
 import socket
 import threading
 import time
@@ -23,11 +20,12 @@ class InsightError(Exception):
         self.status = status
 
 
-# Serialise submission/direct-generation calls in this process; queued jobs may
-# remain pending after the semaphore is released. The cache is process-local.
+# Avoid overlapping direct-generation calls in this web process.
 _INFERENCE_SLOT = threading.BoundedSemaphore(1)
-_JOBS = {}
-_JOBS_LOCK = threading.Lock()
+PUBLIC_MODEL = "kimi-k2.6"
+PUBLIC_CHAT_URL = (
+    "https://api.runpod.ai/v2/moonshot-kimi/openai/v1/chat/completions"
+)
 # Require one useful action in each category instead of recapping analysis panels.
 ADVICE_TYPES = {
     "portfolio_project": "Portfolio project",
@@ -36,34 +34,20 @@ ADVICE_TYPES = {
 }
 
 
-# Resolve settings without network access. Public mode chooses a fixed hosted route.
+# Resolve only the public Kimi settings used by the running application.
 def configuration() -> dict:
-    endpoint = os.getenv("RUNPOD_ENDPOINT_ID", "").strip()
-    mode = os.getenv("RUNPOD_API_MODE", "public").strip()
-    public_mode = mode == "public"
-    default_model = "kimi-k2.6" if public_mode else ""
-    model = os.getenv("RUNPOD_MODEL", default_model).strip()
     key = os.getenv("RUNPOD_API_KEY", "").strip()
-    if public_mode:
-        # Ignore a leftover user-deployed endpoint ID when using the public model.
-        endpoint = "moonshot-kimi"
+    model = os.getenv("RUNPOD_MODEL", PUBLIC_MODEL).strip()
+    mode = os.getenv("RUNPOD_API_MODE", "public").strip()
     missing = []
     if not key or key.startswith("your-"):
         missing.append("RunPod API key")
-    if (
-        not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", endpoint)
-        or endpoint == "your-endpoint-id"
-    ):
-        missing.append("valid endpoint ID")
-    if not model or model.startswith("your-") or len(model) > 200:
-        missing.append("actual deployed model name")
-    if public_mode and model != default_model:
+    if model != PUBLIC_MODEL:
         missing.append("kimi-k2.6 model for the public endpoint")
-    if mode not in {"serverless", "openai", "public"}:
-        missing.append("supported API mode")
+    if mode != "public":
+        missing.append("public API mode")
     return {
         "key": key,
-        "endpoint": endpoint,
         "model": model,
         "mode": mode,
         "missing": missing,
@@ -77,33 +61,12 @@ def public_status() -> dict:
     return {
         "configured": ready,
         "model": config["model"] if ready else None,
-        "mode": (
-            config["mode"]
-            if config["mode"] in {"serverless", "openai", "public"} else None
-        ),
+        "mode": config["mode"] if config["mode"] == "public" else None,
         "message": (
             "Configured model; connection is checked only when you generate an insight."
             if ready else "RunPod setup needed: " + ", ".join(config["missing"]) + "."
         ),
     }
-
-
-def check_connection() -> dict:
-    """Read model metadata without generating text or starting cloud resources."""
-    config = configuration()
-    if config["missing"]:
-        raise InsightError(public_status()["message"])
-    if config["mode"] not in {"public", "openai"}:
-        raise InsightError("The direct connection check requires a chat API mode.", 400)
-    url = f"https://api.runpod.ai/v2/{config['endpoint']}/openai/v1/models"
-    result = _request_json(url, None, config["key"])
-    models = result.get("data")
-    if not isinstance(models, list) or not any(
-        isinstance(model, dict) and model.get("id") == config["model"]
-        for model in models
-    ):
-        raise InsightError("The API is not serving the configured model name.", 502)
-    return {"ready": True, "model": config["model"], "mode": config["mode"]}
 
 
 # Do not forward an Authorization header to a redirected host.
@@ -112,16 +75,16 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-# Shared bounded HTTP transport: a missing payload means GET, otherwise POST.
-def _request_json(url: str, payload: dict | None, key: str) -> dict:
+# Bounded POST transport for the fixed public chat API; no automatic retries.
+def _request_json(url: str, payload: dict, key: str) -> dict:
     request = urllib.request.Request(
         url,
-        data=json.dumps(payload).encode("utf-8") if payload is not None else None,
+        data=json.dumps(payload).encode("utf-8"),
         headers={
             "Authorization": "Bearer " + key,
             "Content-Type": "application/json",
         },
-        method="POST" if payload is not None else "GET",
+        method="POST",
     )
     try:
         opener = urllib.request.build_opener(_NoRedirect())
@@ -279,31 +242,14 @@ def validate_advice(output: dict, constraints: dict) -> list[dict]:
     return recommendations
 
 
-# Decode direct/custom responses and legacy worker chunks into one advice object.
-def _decode_advice(output) -> tuple[dict, str | None]:
-    model = output.get("model") if isinstance(output, dict) else None
-    if isinstance(output, dict) and "text" in output:
-        output = output["text"]
-    if isinstance(output, list):
-        # vLLM workers return either chat-completion objects or token chunks.
-        pieces = []
-        for chunk in output:
-            if isinstance(chunk.get("model"), str):
-                model = chunk["model"]
-            choice = chunk["choices"][0]
-            if isinstance(choice.get("message"), dict):
-                pieces.append(choice["message"]["content"])
-            elif "tokens" in choice:
-                pieces.append("".join(choice["tokens"]))
-            else:
-                pieces.append(choice["text"])
-        output = "".join(pieces)
+# Decode the chat message's JSON, accepting the optional Markdown JSON fence.
+def _decode_advice(output) -> dict:
     if isinstance(output, str):
         value = output.strip()
         if value.startswith("```json") and value.endswith("```"):
             value = value[7:-3].strip()
         output = json.loads(value)
-    return output, model
+    return output
 
 
 # Validate before returning prose; distinguish reported model identity from config.
@@ -325,125 +271,25 @@ def _finish(advice, reported_model, constraints, config):
     }
 
 
-# Legacy queue response: the browser receives an opaque token and polling interval.
-def _pending(token, job=None):
-    job = job or {}
-    running = job.get("provider_status") == "IN_PROGRESS"
-    return {
-        "pending": True,
-        "request_token": token,
-        "provider_status": "IN_PROGRESS" if running else "IN_QUEUE",
-        "poll_after_ms": 1000 if running else 2000,
-        "message": (
-            "RunPod is generating your insight."
-            if running else
-            "Waiting for a RunPod worker (queue or model startup). "
-            "Your instant local summary is ready below."
-        ),
-    }
-
-
-# Convert provider milliseconds only when reported; do not invent missing timings.
-def _provider_timings(result):
-    timings = {}
-    for name, field in [("queue_seconds", "delayTime"),
-                        ("generation_seconds", "executionTime")]:
-        value = result.get(field)
-        if isinstance(value, (int, float)) and 0 <= value < 86400000:
-            timings[name] = round(value / 1000, 3)
-    return timings
-
-
-def _compact_context(context):
-    """Retain evidence and dates while removing repeated analysis/UI fields."""
-    match = context.get("selected_career_result")
-    if not isinstance(match, dict):
-        return context
-    career = match["career"]
+# Keep the coaching context focused on strengths, role requirements and skill gaps.
+# Scores, trend tables and SDG definitions stay in the separate result panels.
+def _coaching_context(context: dict) -> dict:
+    career = context["selected_career_result"]["career"]
     return {
         "degree": context["degree"],
-        "profile": context["profile"],
         "selected_skills": [
             {"skill_id": skill["skill_id"], "skill_name": skill["skill_name"]}
             for skill in context["selected_skills"]
         ],
-        "scenario": context["scenario"],
-        "request_variant": context.get("request_variant", "initial"),
         "career": {
             key: career[key] for key in [
                 "career_id", "career_name", "required_skills",
                 "source_name", "source_url",
             ]
         },
-        "scores": {
-            "coverage": match["match_score"],
-            "scenario": match["ranking_score"],
-        },
-        "missing_skill_ids": match["missing_skill_ids"],
-        "trends": match["required_skill_trends"],
-        "courses": [
-            {
-                key: step["course"][key]
-                for key in [
-                    "course_id", "skill_id", "course_name", "provider",
-                    "course_url", "estimated_hours", "duration_basis",
-                    "cost_type", "source_checked_at",
-                ]
-            }
-            for step in match["learning_path"]["steps"]
-        ],
-        "sdg_mapping": match["sdg_mapping"],
-        "warnings": context["warnings"],
+        "missing_skill_ids": context["selected_career_result"]["missing_skill_ids"],
+        "request_variant": context.get("request_variant", "initial"),
     }
-
-
-def poll_insight(token: str) -> dict:
-    """Poll only an opaque server-issued job token; never accept provider URLs."""
-    # Monotonic time measures expiry independently of wall-clock adjustments.
-    with _JOBS_LOCK:
-        job = _JOBS.get(token)
-        if not job or time.monotonic() - job["created"] > 900:
-            raise InsightError(
-                "This AI request has expired. Check RunPod before submitting again.",
-                410,
-            )
-        if "result" in job:
-            return job["result"]
-    # Network I/O must not hold the registry lock and stall unrelated requests.
-    poll_lock = job.setdefault("poll_lock", threading.Lock())
-    if not poll_lock.acquire(blocking=False):
-        return _pending(token, job)
-    try:
-        if "result" in job:
-            return job["result"]
-        # Repeated browser polls reuse the same job rather than submitting inference.
-        if time.monotonic() - job["last_poll"] < 0.75:
-            return _pending(token, job)
-        job["last_poll"] = time.monotonic()
-        config = job["config"]
-        result = _request_json(
-            f"https://api.runpod.ai/v2/{config['endpoint']}/status/{job['id']}",
-            None, config["key"],
-        )
-        if result.get("status") in {"IN_QUEUE", "IN_PROGRESS"}:
-            job["provider_status"] = result["status"]
-            return _pending(token, job)
-        if result.get("status") != "COMPLETED":
-            raise InsightError(
-                "RunPod generation failed or was cancelled. "
-                "Local results remain available.", 502,
-            )
-        try:
-            advice, model = _decode_advice(result["output"])
-            job["result"] = _finish(advice, model, job["constraints"], config)
-            job["result"]["timings"] = _provider_timings(result)
-        except (KeyError, IndexError, TypeError, ValueError):
-            raise InsightError(
-                "RunPod returned an unsupported explanation.", 502,
-            ) from None
-        return job["result"]
-    finally:
-        poll_lock.release()
 
 
 # Build the coaching prompt, call the configured transport and validate the result.
@@ -482,16 +328,7 @@ def generate_insight(context: dict, constraints: dict) -> dict:
             "Projects are your proposals, not existing verified resources. "
             "For a fresh request_variant, explore a different project theme."
         )
-        prompt_context = _compact_context(context)
-        if config["mode"] == "public" and "career" in prompt_context:
-            # Coaching needs strengths, gaps and resources. Numeric evidence
-            # stays in the result panels instead of encouraging an AI recap.
-            prompt_context = {
-                key: prompt_context[key] for key in [
-                    "degree", "selected_skills", "career", "missing_skill_ids",
-                    "request_variant",
-                ]
-            }
+        prompt_context = _coaching_context(context)
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": json.dumps({
@@ -519,70 +356,24 @@ def generate_insight(context: dict, constraints: dict) -> dict:
                 ]},
             })},
         ]
-        base = f"https://api.runpod.ai/v2/{config['endpoint']}"
-        # Normal public flow: one direct chat request with no local queue polling.
-        if config["mode"] in {"openai", "public"}:
-            direct_url = base + "/openai/v1/chat/completions"
-            started = time.monotonic()
-            payload = {
-                "model": config["model"], "messages": messages,
-                "temperature": 0.6, "max_tokens": 1100, "stream": False,
-            }
-            if config["mode"] == "public":
-                # Request Kimi's concise non-thinking response for interactive advice.
-                payload["thinking"] = {"type": "disabled"}
-            result = _request_json(direct_url, payload, config["key"])
-            output = result["choices"][0]["message"]["content"]
-            advice, _ = _decode_advice(output)
-            reported_model = result.get("model")
-        else:
-            # Legacy-only deduplication: identical context may reuse a job for 15 minutes.
-            fingerprint = hashlib.sha256(json.dumps(
-                {"contract": "action-advice-v1", "context": context,
-                 "constraints": constraints, "model": config["model"],
-                 "endpoint": config["endpoint"]}, sort_keys=True,
-            ).encode()).hexdigest()
-            with _JOBS_LOCK:
-                # Cleanup occurs on later submissions, not in a background timer.
-                for token, job in list(_JOBS.items()):
-                    if time.monotonic() - job["created"] > 900:
-                        del _JOBS[token]
-                    elif job["fingerprint"] == fingerprint:
-                        return job.get("result", _pending(token, job))
-                if len(_JOBS) >= 32:
-                    raise InsightError("Too many active AI requests. Please wait.", 429)
-            result = _request_json(base + "/run", {"input": {
-                "messages": messages,
-                "max_tokens": 1100,
-                "temperature": 0.6,
-                "sampling_params": {"temperature": 0.6, "max_tokens": 1100},
-            }}, config["key"])
-            if result.get("status") in {"IN_QUEUE", "IN_PROGRESS"}:
-                job_id = result.get("id", "")
-                if (
-                    not isinstance(job_id, str)
-                    or not re.fullmatch(r"[A-Za-z0-9_-]{1,160}", job_id)
-                ):
-                    raise InsightError("RunPod did not return a valid job ID.", 502)
-                token = secrets.token_urlsafe(24)
-                with _JOBS_LOCK:
-                    _JOBS[token] = {
-                        "id": job_id, "config": config, "constraints": constraints,
-                        "fingerprint": fingerprint, "created": time.monotonic(),
-                        "last_poll": 0,
-                        "provider_status": result["status"],
-                    }
-                return _pending(token, _JOBS[token])
-            if result.get("status") != "COMPLETED" or "output" not in result:
-                raise InsightError("RunPod did not complete generation.", 502)
-            advice, reported_model = _decode_advice(result["output"])
+        # One direct request returns the advice; there is no background job queue.
+        payload = {
+            "model": config["model"],
+            "messages": messages,
+            "temperature": 0.6,
+            "max_tokens": 1100,
+            "stream": False,
+            "thinking": {"type": "disabled"},
+        }
+        started = time.monotonic()
+        result = _request_json(PUBLIC_CHAT_URL, payload, config["key"])
+        advice = _decode_advice(result["choices"][0]["message"]["content"])
+        reported_model = result.get("model")
         finished = _finish(advice, reported_model, constraints, config)
         # Direct timing includes transport and inference; it is not generation alone.
-        finished["timings"] = (
-            {"request_seconds": round(time.monotonic() - started, 3)}
-            if config["mode"] in {"openai", "public"} else
-            _provider_timings(result)
-        )
+        finished["timings"] = {
+            "request_seconds": round(time.monotonic() - started, 3),
+        }
         finished["transport"] = config["mode"]
         return finished
     except (KeyError, IndexError, TypeError, ValueError):

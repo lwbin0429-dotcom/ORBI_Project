@@ -35,7 +35,7 @@ let nextInsightVariant = "initial";
 let hasInsight = false;
 const insightButton = document.querySelector("#generate-insight");
 
-// Clear advice tied to old inputs. Aborting browser fetch does not cancel a cloud job.
+// Clear advice tied to old inputs and stop waiting on its browser request.
 function clearInsight() {
   nextInsightVariant = "initial";
   hasInsight = false;
@@ -661,8 +661,8 @@ function showInstantSummary(match) {
   document.querySelector("#insight-output").replaceChildren(summary);
 }
 
-// AI runs only on this explicit action. Reuse its request variant during a pending
-// attempt; after success, another perspective gets a fresh generation identifier.
+// AI runs only on this explicit action. After success, another perspective gets
+// a fresh generation identifier to encourage a different project theme.
 insightButton.addEventListener("click", async () => {
   if (!analysisData) return;
   const match = matches.find(
@@ -680,7 +680,7 @@ insightButton.addEventListener("click", async () => {
   const message = document.querySelector("#insight-status");
   const output = document.querySelector("#insight-output");
   const started = Date.now();
-  let stageMessage = "Sending your sourced results to RunPod…";
+  const stageMessage = "Sending your sourced results to RunPod…";
   const progress = setInterval(() => {
     if (version === insightVersion) {
       message.textContent = `${stageMessage} · ${Math.floor((Date.now() - started) / 1000)}s elapsed`;
@@ -691,7 +691,7 @@ insightButton.addEventListener("click", async () => {
   output.setAttribute("aria-busy", "true");
   message.textContent = "Sending your sourced results to RunPod…";
   try {
-    let response = await fetch("/api/insight", {
+    const response = await fetch("/api/insight", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -702,29 +702,7 @@ insightButton.addEventListener("click", async () => {
       }),
       signal: requestController.signal,
     });
-    let data = await response.json();
-    // Current public mode returns directly; this loop supports legacy queued jobs.
-    while (response.status === 202) {
-      if (version !== insightVersion) return;
-      if (requestController.signal.aborted) {
-        throw new DOMException("AI wait timed out", "AbortError");
-      }
-      stageMessage = data.message;
-      message.textContent = stageMessage;
-      const pollDelay = Math.min(5000, Math.max(750, data.poll_after_ms || 2000));
-      await new Promise((resolve) => setTimeout(resolve, pollDelay));
-      if (version !== insightVersion) return;
-      if (requestController.signal.aborted) {
-        throw new DOMException("AI wait timed out", "AbortError");
-      }
-      response = await fetch(
-        `/api/insight/jobs/${encodeURIComponent(data.request_token)}`,
-        {
-          signal: requestController.signal,
-        },
-      );
-      data = await response.json();
-    }
+    const data = await response.json();
     if (version !== insightVersion) return;
     if (!response.ok) {
       message.textContent = (data.errors || ["AI insight is unavailable."]).join(" ");
@@ -760,12 +738,6 @@ insightButton.addEventListener("click", async () => {
     // A new perspective may incur a new inference charge only when clicked again.
     nextInsightVariant = crypto.randomUUID();
     message.textContent = data.method;
-    if (data.timings?.queue_seconds !== undefined) {
-      message.textContent += ` RunPod waiting: ${data.timings.queue_seconds}s.`;
-    }
-    if (data.timings?.generation_seconds !== undefined) {
-      message.textContent += ` Generation: ${data.timings.generation_seconds}s.`;
-    }
     // Total direct API time includes network overhead; it is not model time alone.
     if (data.timings?.request_seconds !== undefined) {
       message.textContent += ` Direct API request: ${data.timings.request_seconds}s.`;
@@ -776,7 +748,7 @@ insightButton.addEventListener("click", async () => {
     if (version === insightVersion) {
       message.textContent =
         error.name === "AbortError"
-          ? "The AI wait timed out. No new job was submitted; check RunPod before retrying."
+          ? "The AI request timed out. Your career results remain available."
           : "AI insight could not be loaded. Your career results remain available.";
     }
   } finally {

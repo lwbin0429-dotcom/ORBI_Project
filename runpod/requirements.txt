@@ -1,4 +1,0 @@
-runpod>=1.7,<2
-transformers>=4.51,<5
-accelerate>=1,<2
-torch>=2.6,<3
