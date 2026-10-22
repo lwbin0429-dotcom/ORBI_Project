@@ -179,14 +179,11 @@ career order. Do not manufacture changes to make a demo look more dramatic.
    the mapping in `evidence_note`. Do not update the date without reviewing data.
 4. Add new quarters to `market_signals.csv`, retaining older observations and
    one record per career/quarter. Verify occupation identity and methodology.
-5. Run `python -m unittest discover tests`. Submit or reanalyse a profile;
+5. Submit or reanalyse a profile;
    confirm the source dates, known/Unknown badges and recalculated scores.
 
 Maintain evidence snapshots through version control. A file edit is not
 automatic online synchronisation; the UI explicitly describes manual review.
-The automated update test uses a temporary synthetic mutation to prove that
-edits change scores. Its changed direction is not a real-world claim and is
-never written to the shipped evidence file.
 
 ## Failure behaviour
 
