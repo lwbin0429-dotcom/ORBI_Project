@@ -1,5 +1,8 @@
 """Serve the ORBI HTML/CSS frontend and Python matching API."""
 
+# Entry point: render the page, validate profiles, combine local catalogue results,
+# and request optional AI advice. Scoring remains in Python, separate from AI prose.
+
 import os
 import re
 from dataclasses import asdict
@@ -26,12 +29,16 @@ from trend_data import (
 )
 
 
+# Resolve files from this module so startup does not depend on the working directory.
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+# Deployment environment variables take precedence over the local ignored .env file.
 load_dotenv(DATA_DIR.parent / ".env", override=False)
 app = Flask(__name__)
+# Profiles contain a few catalogue IDs; bound incoming JSON before processing it.
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024
 
 
+# Render the initial catalogue; career-data failures must not block profile intake.
 @app.get("/")
 def index():
     error = None
@@ -60,6 +67,7 @@ def index():
     )
 
 
+# Ordinary analysis is local CSV processing and never submits a paid AI request.
 @app.post("/api/analyse")
 def analyse():
     return analyse_payload(request.get_json(silent=True))
@@ -69,6 +77,7 @@ def analyse_payload(payload):
     """Recompute server-owned results for both analysis and AI requests."""
     if not isinstance(payload, dict):
         return jsonify(errors=["Send a valid JSON profile."]), 400
+    # Validate types before using client values as catalogue IDs or lookup keys.
     degree_id = payload.get("degree_id")
     skill_ids = payload.get("user_skill_ids")
     scenario = payload.get("scenario", "moderate")
@@ -98,8 +107,10 @@ def analyse_payload(payload):
     if errors:
         return jsonify(errors=errors), 400
 
+    # Preserve selection order while counting each self-reported skill only once.
     profile = {"degree_id": degree_id, "user_skill_ids": list(dict.fromkeys(skill_ids))}
     warnings = []
+    # Optional evidence panels fail independently of profile validation and matching.
     try:
         goals = load_sdgs(DATA_DIR / "sdgs.csv")
     except (OSError, ValueError):
@@ -130,6 +141,7 @@ def analyse_payload(payload):
         warnings.append(
             "Trend evidence is unavailable. Ranking uses skill coverage only."
         )
+    # Unknown evidence does not become a validated Stable signal in coverage counts.
     trend_codes = {
         sid: TREND_CODES[trend.trend_direction]
         for sid, trend in trends.items()
@@ -148,6 +160,7 @@ def analyse_payload(payload):
             {row["degree_id"] for row in degrees},
             {row["skill_id"] for row in skills},
         )
+        # The chosen scenario changes ranking only, not the user's reported skills.
         matches = rank_careers(
             careers,
             profile["user_skill_ids"],
@@ -155,6 +168,7 @@ def analyse_payload(payload):
             trend_codes=trend_codes,
             scenario_multiplier=SCENARIOS[scenario] if trend_codes else 0,
         )
+        # Local job-offering observations are displayed separately from scoring.
         try:
             market_signals, market_issues = load_market_signals(
                 DATA_DIR / "market_signals.csv",
@@ -178,6 +192,7 @@ def analyse_payload(payload):
         )
     elif 0 < len(matches) < 3:
         warnings.append(f"Only {len(matches)} valid career(s) are available.")
+    # Assemble one response for career cards and every related detail panel.
     return jsonify(
         profile=profile,
         matches=[
@@ -242,16 +257,19 @@ def analyse_payload(payload):
     )
 
 
+# This reveals configuration readiness only; it makes no inference/network request.
 @app.get("/api/insight/status")
 def insight_status():
     return jsonify(public_status())
 
 
+# AI is opt-in. Recompute trusted results rather than accepting client scores or URLs.
 @app.post("/api/insight")
 def insight():
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict) or not isinstance(payload.get("career_id"), str):
         return jsonify(errors=["Choose a career from your current results."]), 400
+    # A bounded identifier distinguishes an explicitly requested fresh perspective.
     variant = payload.get("request_variant", "initial")
     if not isinstance(variant, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", variant):
         return jsonify(errors=["Use a valid advice request identifier."]), 400
@@ -259,6 +277,7 @@ def insight():
     if response.status_code != 200:
         return response
     analysis = response.get_json()
+    # Advice may target only a career in this freshly calculated top-three result.
     match = next(
         (item for item in analysis["matches"]
          if item["career"]["career_id"] == payload["career_id"]),
@@ -274,6 +293,7 @@ def insight():
         d for d in degrees if d["degree_id"] == analysis["profile"]["degree_id"]
     )
     selected = set(analysis["profile"]["user_skill_ids"])
+    # Send catalogue-backed context, without credentials or arbitrary client content.
     context = {
         "degree": degree,
         "profile": analysis["profile"],
@@ -287,6 +307,7 @@ def insight():
         result = generate_insight(context, advice_constraints(analysis, match, skills))
     except InsightError as error:
         return jsonify(errors=[str(error)]), error.status
+    # Legacy queue mode returns a token; the current public chat API returns advice.
     if result.get("pending"):
         return jsonify(result), 202
     return jsonify(
@@ -297,6 +318,7 @@ def insight():
     )
 
 
+# Legacy compatibility: poll a server-issued token, never a browser-supplied URL.
 @app.get("/api/insight/jobs/<token>")
 def insight_job(token):
     try:
@@ -306,5 +328,6 @@ def insight_job(token):
     return jsonify(result), 202 if result.get("pending") else 200
 
 
+# Local default: loopback only. Replit supplies HOST=0.0.0.0 and PORT=8000.
 if __name__ == "__main__":
     app.run(host=os.getenv("HOST", "127.0.0.1"), port=int(os.getenv("PORT", "8000")))

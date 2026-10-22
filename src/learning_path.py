@@ -1,5 +1,8 @@
 """Validated learning resources and ordered plans for missing required skills."""
 
+# courses.csv supplies reviewed links, time budgets and prerequisite skill IDs.
+# Plans are suggestions: completing a step does not update the user's skill profile.
+
 from dataclasses import asdict, dataclass
 from datetime import date
 from decimal import Decimal, InvalidOperation
@@ -11,6 +14,7 @@ from trend_data import _records
 
 @dataclass(frozen=True)
 class Course:
+    # One skill-to-resource mapping, including its scope and duration/cost disclosures.
     course_id: str
     skill_id: str
     course_name: str
@@ -35,6 +39,7 @@ def load_courses(
     skill_ids: set[str],
 ) -> tuple[list[Course], list[str]]:
     """Exclude invalid records; a duplicate ID invalidates every occurrence."""
+    # Reuse the comment-aware CSV reader and require every resource metadata column.
     rows = _records(path, set(Course.__dataclass_fields__))
     courses, issues, seen = {}, [], set()
     for row in rows:
@@ -58,6 +63,7 @@ def load_courses(
             supporting = _ids(row["supporting_urls"])
             if any(not _valid_url(url) for url in supporting):
                 raise ValueError("invalid supporting URL")
+            # Reject non-finite budgets before converting values for JSON output.
             hours = Decimal(row["estimated_hours"])
             if not hours.is_finite() or hours <= 0 or hours > 10000:
                 raise ValueError("duration must be finite and positive")
@@ -75,6 +81,7 @@ def load_courses(
             checked = date.fromisoformat(row["source_checked_at"])
             if checked > date.today():
                 raise ValueError("source review date is in the future")
+            # Prerequisites refer to catalogue skills, not arbitrary course IDs.
             prerequisites = _ids(row["prerequisite_skill_ids"])
             if not set(prerequisites).issubset(skill_ids):
                 raise ValueError("unsupported prerequisite skill")
@@ -101,12 +108,14 @@ def build_learning_path(
     courses: list[Course],
 ) -> dict:
     """Plan only missing skills; order applicable prerequisites before dependants."""
+    # Never assign extra courses for skills the user already selected.
     selected = set(selected_skill_ids)
     missing = set(missing_skill_ids) - selected
     choices = {}
     ordered_courses = sorted(
         courses, key=lambda item: (item.learning_order, item.course_id)
     )
+    # Prefer the first valid resource by editorial learning order, then course ID.
     for course in ordered_courses:
         if course.skill_id in missing:
             choices.setdefault(course.skill_id, course)
@@ -117,12 +126,14 @@ def build_learning_path(
     pending = dict(choices)
     prepared = set(selected)
     steps = []
+    # Resolve prerequisites within this plan before selecting the next resource.
     while pending:
         ready = [
             course
             for course in pending.values()
             if not (set(course.prerequisite_skill_ids) & pending.keys())
         ]
+        # A dependency cycle cannot produce a valid order; report it explicitly.
         if not ready:
             unavailable.extend(
                 {
@@ -139,6 +150,7 @@ def build_learning_path(
             {
                 "sequence": len(steps) + 1,
                 "course": asdict(course),
+                # External background is disclosed rather than added as hidden tasks.
                 "suggested_background_ids": sorted(
                     set(course.prerequisite_skill_ids) - prepared
                 ),
@@ -151,6 +163,7 @@ def build_learning_path(
         "unavailable": unavailable,
         "missing_skill_count": len(missing),
         "covered_skill_count": len(steps),
+        # Sum with Decimal so ordinary decimal time budgets do not accumulate noise.
         "total_estimated_hours": float(
             sum(
                 (

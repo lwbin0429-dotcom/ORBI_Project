@@ -6,7 +6,7 @@
 
 | Field | Details |
 | --- | --- |
-| **Team Name** | CV |
+| **Team Name** | Bin |
 | **Team Domain** | Domain 1 |
 | **SDG Track (1–17)** | SDG 8 |
 | **Team Leader** | Lee Wei Bin |
@@ -65,8 +65,8 @@ trustworthy, hallucination-resistant career guidance.
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | HTML5, CSS3, Modern JavaScript |
-| Backend | Python 3, Flask |
+| Frontend | HTML5, CSS, JavaScript |
+| Backend | Python, Flask |
 | Database | Structured CSV Catalogues (O*NET, DOSM, SDGs) |
 | AI / Compute | RunPod Public Endpoints (GPU-accelerated Kimi K2.6) |
 | Hosting / Dev | Replit |
@@ -80,6 +80,9 @@ trustworthy, hallucination-resistant career guidance.
 ├── data/                    # Degree, skill, career, trend and course catalogues
 ├── runpod/
 │   └── handler.py           # Optional legacy worker; not used by the public API
+├── scripts/
+│   ├── check_runpod.py      # Connection check and opt-in synthetic inference test
+│   └── diagnose_runpod.py   # Minimal API diagnostics
 ├── src/
 │   ├── main.py              # Flask application entry point and API routes
 │   ├── profile_data.py      # Catalogue loading and profile validation
@@ -88,6 +91,7 @@ trustworthy, hallucination-resistant career guidance.
 │   ├── learning_path.py     # Prerequisite-aware learning paths
 │   ├── sdg_data.py          # SDG definitions and contribution mappings
 │   ├── runpod_insight.py    # Kimi API requests and advice validation
+│   ├── utils.py             # Helper functions
 │   ├── templates/
 │   │   └── index.html       # English HTML/Jinja interface
 │   └── static/
@@ -97,6 +101,7 @@ trustworthy, hallucination-resistant career guidance.
 │   ├── REPLIT PROOF OF USE.pdf
 │   ├── RUNPOD PROOF OF USE.pdf
 │   └── Submission Template SDC Hackathon.pdf
+├── tests/                   # Profile, matching, trends, learning, SDG and API tests
 ├── .env.example             # Example environment variables
 ├── .gitignore
 ├── .replit                  # Replit run configuration
@@ -154,6 +159,14 @@ python src/main.py
 Open http://127.0.0.1:8000. On Windows PowerShell, use
 `Copy-Item .env.example .env` instead of `cp`. Restart Flask after editing `.env`.
 
+### Run Tests
+
+```bash
+python -m unittest discover tests
+```
+
+The latest local run passed 71 tests. AI requests are mocked during these tests.
+
 ---
 
 ## How We Use Replit *(Required)*
@@ -176,6 +189,22 @@ Open http://127.0.0.1:8000. On Windows PowerShell, use
 - **Integration:** Flask sends the recomputed profile and approved skill/resource
   references using `RUNPOD_API_KEY`, `RUNPOD_MODEL=kimi-k2.6` and
   `RUNPOD_API_MODE=public`. Python validates the response and resolves course links.
+
+Example request:
+
+```bash
+curl -X POST https://api.runpod.ai/v2/moonshot-kimi/openai/v1/chat/completions \
+  -H "Authorization: Bearer $RUNPOD_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "kimi-k2.6",
+    "messages": [
+      {"role": "user", "content": "Suggest a Python portfolio project."}
+    ],
+    "thinking": {"type": "disabled"},
+    "max_tokens": 250
+  }'
+```
 
 📄 Proof of use: [`submission/RUNPOD PROOF OF USE.pdf`](submission/RUNPOD%20PROOF%20OF%20USE.pdf)
 

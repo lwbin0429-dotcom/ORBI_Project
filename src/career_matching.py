@@ -1,5 +1,8 @@
 """Source-backed career catalogue and deterministic skill coverage ranking."""
 
+# This module computes scores locally; it does not call AI or fetch online evidence.
+# Career requirements are ORBI's curated subsets, not universal employer requirements.
+
 from dataclasses import dataclass
 from datetime import date
 from fractions import Fraction
@@ -11,6 +14,7 @@ from profile_data import _read_csv
 
 @dataclass(frozen=True)
 class Career:
+    # Immutable occupation record with both its source and ORBI's mapping rationale.
     career_id: str
     career_name: str
     related_degrees: tuple[str, ...]
@@ -26,6 +30,7 @@ class Career:
 
 @dataclass(frozen=True)
 class CareerMatch:
+    # Keep selected-skill coverage separate from the scenario-adjusted ranking.
     career: Career
     matched_skill_ids: tuple[str, ...]
     missing_skill_ids: tuple[str, ...]
@@ -36,6 +41,7 @@ class CareerMatch:
 
     @property
     def coverage(self) -> Fraction:
+        # Fractions preserve exact comparisons; duplicate requirements count once.
         return Fraction(
             len(self.matched_skill_ids),
             len(set(self.career.required_skills)),
@@ -43,10 +49,12 @@ class CareerMatch:
 
     @property
     def match_score(self) -> float:
+        # Convert to a percentage only for the JSON response and display.
         return float(self.coverage * 100)
 
     @property
     def ranking_value(self) -> Fraction:
+        # Scenario weights change ranking, while raw coverage and skill gaps stay fixed.
         adjusted = (
             self.coverage * 100
             + self.scenario_multiplier * self.trend_adjustment
@@ -55,20 +63,24 @@ class CareerMatch:
 
     @property
     def ranking_score(self) -> float:
+        # Keep the precise ranking_value available for sorting before presentation.
         return float(self.ranking_value)
 
 
+# CSV multi-value fields use semicolons; remove blanks and duplicates in source order.
 def _ids(value: str) -> tuple[str, ...]:
     return tuple(
         dict.fromkeys(item.strip() for item in value.split(";") if item.strip())
     )
 
 
+# Validate link structure only; this does not check availability or source accuracy.
 def _valid_url(value: str) -> bool:
     parsed = urlparse(value)
     return parsed.scheme in {"https", "http"} and bool(parsed.netloc)
 
 
+# Validate mappings against the degree/skill catalogues and report excluded records.
 def load_careers(
     path: Path,
     degree_ids: set[str],
@@ -96,6 +108,7 @@ def load_careers(
         required = _ids(row["required_skills"])
         related = _ids(row["related_degrees"])
         reason = None
+        # Reject an invalid requirement set instead of shrinking the score denominator.
         if not required:
             reason = "no required skills"
         elif not set(required).issubset(skill_ids):
@@ -135,6 +148,7 @@ def load_careers(
     return careers, issues
 
 
+# All degrees may explore all careers; degree relevance only resolves score ties.
 def rank_careers(
     careers: list[Career],
     selected_skill_ids: list[str],
@@ -151,6 +165,7 @@ def rank_careers(
         if not required:
             continue
         codes = trend_codes or {}
+        # Missing trend evidence contributes zero but remains in the denominator.
         adjustment = Fraction(
             10 * sum(codes.get(sid, 0) for sid in required),
             len(required),
@@ -176,4 +191,5 @@ def rank_careers(
             match.career.career_id,
         )
     )
+    # Return at most the requested number of valid matches (three in the web app).
     return results[:max(0, limit)]

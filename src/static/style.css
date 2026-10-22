@@ -1,6 +1,11 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
-/* Design tokens */
+/*
+  ORBI presentation layer: shared tokens, page sections, responsive overrides,
+  and reduced-motion handling. app.js controls state; CSS styles that state.
+*/
+
+/* Design tokens: change the palette and fonts here to keep sections consistent. */
 
 :root {
   color-scheme: dark;
@@ -276,6 +281,7 @@ h1 span {
 }
 
 .orbit-scene {
+  /* Isolate decorative layers so they do not interfere with the Hero text. */
   width: 100%;
   aspect-ratio: 1;
   position: relative;
@@ -335,6 +341,7 @@ h1 span {
 }
 
 .ai-chip-frame {
+  /* Perspective belongs to the stationary frame; only the inner chip rotates. */
   --chip-size: clamp(150px, 18vw, 230px);
   --chip-depth: 26px;
   position: relative;
@@ -346,6 +353,7 @@ h1 span {
 }
 
 .ai-chip {
+  /* Preserve depth between the front, back and four processor edge surfaces. */
   position: relative;
   width: 100%;
   height: 100%;
@@ -354,6 +362,7 @@ h1 span {
 }
 
 .ai-chip-face {
+  /* Hide mirrored face text when that side of the processor points away. */
   position: absolute;
   inset: 0;
   display: flex;
@@ -407,6 +416,7 @@ h1 span {
 }
 
 .ai-chip-side {
+  /* Narrow faces create physical depth rather than a flat spinning label. */
   position: absolute;
   width: var(--chip-depth);
   height: 100%;
@@ -441,6 +451,7 @@ h1 span {
 }
 
 @keyframes ai-chip-turn {
+  /* One continuous full turn with a fixed tilt keeps the rotation seamless. */
   from {
     transform: rotateX(12deg) rotateY(-20deg);
   }
@@ -518,7 +529,7 @@ h1 span {
   color: #66616b;
 }
 
-/* Catalogue statistics */
+/* Catalogue statistics: the template supplies counts from the loaded catalogues. */
 
 .facts-strip {
   display: grid;
@@ -627,7 +638,7 @@ h2 {
   margin-bottom: 0;
 }
 
-/* Profile form and skill selection */
+/* Profile form and skill selection: selected/disabled/error states share this section. */
 
 .profile-section {
   padding-block: 80px;
@@ -896,7 +907,7 @@ input::placeholder {
   color: #ffb2bb;
 }
 
-/* Results and career cards */
+/* Results and career cards: keep raw coverage visually distinct from scenario scores. */
 
 .results-section {
   padding-block: 80px 90px;
@@ -1233,7 +1244,7 @@ td:last-child {
   color: #111;
 }
 
-/* Trend evidence, scenarios and Malaysian market context */
+/* Trend evidence, scenarios and Malaysian market context remain separate panels. */
 
 .trend-section {
   margin-top: 30px;
@@ -1407,6 +1418,7 @@ td:last-child {
 /* Responsive layouts */
 
 @media (min-width: 1500px) {
+  /* Limit decorative growth while giving wide desktop layouts more breathing room. */
   .hero {
     min-height: 650px;
   }
@@ -1419,6 +1431,7 @@ td:last-child {
 }
 
 @media (max-width: 1050px) {
+  /* Tighten two-column layouts before switching to the mobile single-column flow. */
   .shell {
     width: calc(100% - 64px);
   }
@@ -1465,6 +1478,7 @@ td:last-child {
 }
 
 @media (max-width: 760px) {
+  /* Stack the Hero, form and results; retain usable spacing for touch interaction. */
   .shell {
     width: calc(100% - 40px);
   }
@@ -1665,6 +1679,7 @@ td:last-child {
 }
 
 @media (max-width: 390px) {
+  /* Compact labels and padding for the narrowest supported phone layouts. */
   h1 {
     font-size: 53px;
   }
@@ -1703,6 +1718,7 @@ td:last-child {
 /* Reduced motion */
 
 @media (prefers-reduced-motion: reduce) {
+  /* Stop the decorative chip rotation and remove animated UI transitions. */
   .ai-chip {
     animation: none;
     transform: rotateX(12deg) rotateY(-20deg);
@@ -1716,7 +1732,7 @@ td:last-child {
     transition: none !important;
   }
 }
-/* Ordered reskilling resources for the selected career. */
+/* Learning steps keep server-supplied ordering, metadata and external links readable. */
 .learning-summary {
   margin: 1.5rem 0;
   color: #f1f1f3;
@@ -1780,7 +1796,7 @@ td:last-child {
   margin-top: 0.5rem;
 }
 
-/* SDG contributions and grounded AI explanations. */
+/* SDG/AI cards wrap long source names and prose without widening the page. */
 .sdg-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));

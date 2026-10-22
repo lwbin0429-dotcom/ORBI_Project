@@ -1,4 +1,9 @@
 <!doctype html>
+<!--
+  ORBI's server-rendered page shell. Flask supplies the catalogue through Jinja;
+  app.js fills result containers after analysis and optional AI requests.
+  Element IDs are shared with app.js; keep those selectors in sync when editing.
+-->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -19,18 +24,21 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='style.css') }}"
     />
+    <!-- Defer browser logic until the form, result panels and catalogue JSON exist. -->
     <script
       src="{{ url_for('static', filename='app.js') }}"
       defer
     ></script>
   </head>
   <body>
+    <!-- Keyboard users can bypass navigation and move directly to profile intake. -->
     <a
       class="skip-link"
       href="#profile"
     >
       Skip to skills profile
     </a>
+    <!-- Primary navigation uses page anchors; no account or separate page is needed. -->
     <header class="site-header">
       <div class="shell nav-wrap">
         <a
@@ -61,6 +69,7 @@
     </header>
 
     <main>
+      <!-- Introductory copy and the decorative, CSS-animated AI processor. -->
       <section
         class="hero shell"
         aria-labelledby="hero-title"
@@ -91,6 +100,7 @@
             No sign-up. Just you and your potential.
           </p>
         </div>
+        <!-- Decorative artwork is hidden from assistive technology, not form content. -->
         <div
           class="orbit-scene"
           aria-hidden="true"
@@ -102,6 +112,7 @@
           <div class="orbit-axis"></div>
           <span class="satellite satellite-one"></span>
           <span class="satellite satellite-two"></span>
+          <!-- Front/back faces and edge surfaces form a rotating 3D CSS object. -->
           <div class="ai-chip-frame">
             <div class="ai-chip">
               <div class="ai-chip-face ai-chip-front">
@@ -149,6 +160,7 @@
       </section>
 
       <div class="shell">
+        <!-- Catalogue counts come from Flask rather than duplicated display constants. -->
         <div class="facts-strip">
           <p>
             <strong>{{ degrees|length|string if degrees else '—' }}</strong>
@@ -170,6 +182,7 @@
         </div>
       </div>
 
+      <!-- Explain the profile -> career match -> learning-plan flow before intake. -->
       <section
         id="how-it-works"
         class="shell how-section"
@@ -205,6 +218,7 @@
         </div>
       </section>
 
+      <!-- Part 1: self-reported degree and skills; selection never implies mastery. -->
       <section
         id="profile"
         class="profile-section"
@@ -263,6 +277,7 @@
                 >
                   Select your degree programme
                 </option>
+                <!-- Stable IDs are submitted; human-readable names remain UI labels. -->
                 {% for degree in degrees %}
                   <option value="{{ degree.degree_id }}">{{ degree.degree_name }}</option>
                 {% endfor %}
@@ -301,6 +316,7 @@
                 class="skill-grid"
                 id="skill-grid"
               >
+                <!-- Render real catalogue skills; app.js filters these labels on search. -->
                 {% for skill in skills %}
                   <label class="skill-chip">
                     <input
@@ -342,6 +358,7 @@
               <span aria-hidden="true">↗</span>
             </button>
             <p class="form-footnote">Self-reported skills. No account required.</p>
+            <!-- Matching uses the JavaScript JSON API, so explain the fallback clearly. -->
             <noscript>
               <p class="notice">
                 Enable JavaScript to select skills and view your career matches.
@@ -351,6 +368,7 @@
         </div>
       </section>
 
+      <!-- Parts 2-5: empty initially, then populated from one server analysis response. -->
       <section
         id="results"
         class="shell results-section"
@@ -408,6 +426,7 @@
             id="results-warnings"
             aria-live="polite"
           ></div>
+          <!-- Selected-skill evidence is separate from occupation-level DOSM counts. -->
           <section
             class="trend-section"
             aria-labelledby="trends-title"
@@ -429,6 +448,7 @@
               class="field-help"
               aria-live="polite"
             ></p>
+            <!-- Missing evidence remains available without being labelled Stable. -->
             <details
               id="unknown-trends-details"
               class="source-details"
@@ -441,6 +461,7 @@
               ></div>
             </details>
           </section>
+          <!-- Switching scenarios recalculates estimates without calling the AI model. -->
           <section
             class="scenario-panel"
             aria-labelledby="scenario-title"
@@ -485,6 +506,7 @@
             id="career-cards"
             class="career-grid"
           ></div>
+          <!-- The chosen top-three career drives gaps, learning, SDGs and AI context. -->
           <section
             id="gap-section"
             class="gap-panel"
@@ -532,6 +554,7 @@
               ></div>
             </details>
           </section>
+          <!-- Part 4: ordered missing-skill resources and explicit unavailable states. -->
           <section
             id="learning-section"
             class="gap-panel learning-panel"
@@ -566,6 +589,7 @@
               Sources are manually checked and may change after the review date.
             </p>
           </section>
+          <!-- Part 5: ORBI contribution rationales linked to official UN definitions. -->
           <section
             id="sdg-section"
             class="gap-panel"
@@ -595,6 +619,7 @@
               ></div>
             </details>
           </section>
+          <!-- AI is opt-in; the browser sends profile IDs, not credentials or scores. -->
           <section
             id="insight-section"
             class="gap-panel insight-panel"
@@ -633,6 +658,7 @@
               If RunPod is unavailable, your matches and learning path still work.
             </p>
           </section>
+          <!-- Comparable Malaysian occupation observations; these do not affect ranking. -->
           <section
             id="market-section"
             class="gap-panel"
@@ -668,6 +694,7 @@
               career order in both scenarios can be a valid result.
             </p>
           </details>
+          <!-- Validation notices explain records omitted from the displayed evidence. -->
           <details
             id="evidence-issues"
             class="source-details"
@@ -676,6 +703,7 @@
             <summary>Evidence validation notices</summary>
             <ul id="evidence-issues-list"></ul>
           </details>
+          <!-- Invalid career mappings are excluded instead of inflating coverage scores. -->
           <details
             id="excluded-details"
             class="source-details"
@@ -693,6 +721,7 @@
         </div>
       </section>
     </main>
+    <!-- Persistent page footer below the interactive profile/results workflow. -->
     <footer class="site-footer">
       <div class="shell footer-inner">
         <a
@@ -706,6 +735,7 @@
         <span>Career exploration, with you in control.</span>
       </div>
     </footer>
+    <!-- Jinja tojson safely serialises public labels/IDs for app.js; no API key is here. -->
     <script
       id="catalogue-data"
       type="application/json"

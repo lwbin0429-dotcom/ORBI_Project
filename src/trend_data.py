@@ -1,5 +1,8 @@
 """Validated, manually maintained trend evidence and local market observations."""
 
+# Two separate datasets: skill directions affect scenario ranking; DOSM occupation
+# counts provide local context only. Neither is fetched automatically from the web.
+
 import csv
 import re
 from dataclasses import MISSING, asdict, dataclass
@@ -10,12 +13,15 @@ from career_matching import _valid_url
 from profile_data import _csv_content_lines
 
 
+# Unknown has no directional contribution; it is not evidence of a stable trend.
 TREND_CODES = {"rising": 1, "stable": 0, "declining": -1, "unknown": 0}
+# These multipliers are illustrative project choices, not measured AI effects.
 SCENARIOS = {"moderate": 1, "fast": 2}
 
 
 @dataclass(frozen=True)
 class SkillTrend:
+    # Preserve metric, region and date type alongside each interpreted direction.
     skill_id: str
     trend_direction: str
     source_name: str
@@ -33,6 +39,7 @@ class SkillTrend:
 
 @dataclass(frozen=True)
 class MarketSignal:
+    # A sourced occupation/quarter observation, independent of the skill trend model.
     career_id: str
     occupation_code: str
     occupation_name: str
@@ -45,6 +52,7 @@ class MarketSignal:
     mapping_note: str
 
 
+# Shared evidence/resource reader: skip only the initial CSV comment preamble.
 def _records(path: Path, fields: set[str]) -> list[dict[str, str]]:
     with path.open(encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(_csv_content_lines(handle))
@@ -58,6 +66,7 @@ def _records(path: Path, fields: set[str]) -> list[dict[str, str]]:
         return records
 
 
+# Check basic provenance consistency; this does not independently verify a claim.
 def _check_evidence(row: dict[str, str]) -> None:
     if not row["source_name"] or not _valid_url(row["source_url"]):
         raise ValueError("missing source name or valid source URL")
@@ -67,6 +76,7 @@ def _check_evidence(row: dict[str, str]) -> None:
         raise ValueError("review date precedes publication date")
 
 
+# Keep valid skill records and return notices for evidence excluded from scoring.
 def load_trends(
     path: Path,
     skill_ids: set[str],
@@ -80,6 +90,7 @@ def load_trends(
     trends, issues, seen = {}, [], set()
     for row in rows:
         sid = row["skill_id"]
+        # Conflicting duplicate IDs invalidate the skill rather than selecting a row.
         if sid in seen:
             trends.pop(sid, None)
             issues.append(f"{sid}: duplicate trend records; treated as Unknown.")
@@ -91,6 +102,7 @@ def load_trends(
             if row["trend_direction"] not in TREND_CODES:
                 raise ValueError("invalid trend direction")
             _check_evidence(row)
+            # A source snapshot or ORBI review must not be labelled a publication date.
             date_kind = row.get("source_date_kind", "publication")
             if date_kind not in {"publication", "snapshot", "review"}:
                 raise ValueError("invalid source date kind")
@@ -115,6 +127,7 @@ def load_trends(
     return trends, issues
 
 
+# Always return a displayable state, including explicit missing-evidence details.
 def describe_trend(skill_id: str, trends: dict[str, SkillTrend]) -> dict:
     trend = trends.get(skill_id)
     if trend:
@@ -132,6 +145,7 @@ def describe_trend(skill_id: str, trends: dict[str, SkillTrend]) -> dict:
     }
 
 
+# Identify each local observation by occupation mapping and quarter.
 def load_market_signals(
     path: Path,
     career_ids: set[str],
@@ -167,6 +181,7 @@ def load_market_signals(
     return list(signals.values()), issues
 
 
+# Compare only the newest consecutive quarters with matching source/mapping fields.
 def market_summary(career_id: str, signals: list[MarketSignal]) -> dict:
     records = sorted(
         (record for record in signals if record.career_id == career_id),
@@ -183,6 +198,7 @@ def market_summary(career_id: str, signals: list[MarketSignal]) -> dict:
     if len(records) < 2:
         return result
     previous, current = records[-2:]
+    # A linear quarter index also handles the Q4-to-Q1 boundary between years.
     previous_index = int(previous.period[:4]) * 4 + int(previous.period[-1])
     current_index = int(current.period[:4]) * 4 + int(current.period[-1])
     comparable = (
@@ -192,6 +208,7 @@ def market_summary(career_id: str, signals: list[MarketSignal]) -> dict:
         and previous.occupation_name == current.occupation_name
         and previous.mapping_note == current.mapping_note
     )
+    # Missing comparisons use None, and a zero base is never divided into a percent.
     if comparable and previous.job_offerings > 0:
         result["change_percent"] = (
             100 * (current.job_offerings - previous.job_offerings)

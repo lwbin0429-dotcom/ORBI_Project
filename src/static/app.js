@@ -1,5 +1,10 @@
 "use strict";
 
+// Frontend controller: read the rendered catalogue, submit profiles to Flask,
+// render server-calculated results, and request optional personalised AI advice.
+// Scores and evidence come from the backend; this file manages browser state/UI.
+
+// Build ID-to-label maps from Jinja's JSON block instead of duplicating CSV labels.
 const catalogue = JSON.parse(document.querySelector("#catalogue-data").textContent);
 const skillNames = new Map(
   catalogue.skills.map((skill) => [skill.skill_id, skill.skill_name]),
@@ -16,6 +21,9 @@ const errors = document.querySelector("#form-errors");
 const empty = document.querySelector("#results-empty");
 const content = document.querySelector("#results-content");
 const status = document.querySelector("#results-status");
+
+// Analysis and AI have separate request versions/controllers so stale responses
+// cannot replace results after the user changes their profile or chosen career.
 let matches = [];
 let requestVersion = 0;
 let controller = null;
@@ -27,6 +35,7 @@ let nextInsightVariant = "initial";
 let hasInsight = false;
 const insightButton = document.querySelector("#generate-insight");
 
+// Clear advice tied to old inputs. Aborting browser fetch does not cancel a cloud job.
 function clearInsight() {
   nextInsightVariant = "initial";
   hasInsight = false;
@@ -43,6 +52,7 @@ function clearInsight() {
       : "Generate an insight for the current career when you are ready.";
 }
 
+// Read only public configuration status; this does not call the model or expose keys.
 async function checkInsightConfiguration() {
   try {
     const response = await fetch("/api/insight/status");
@@ -62,6 +72,7 @@ async function checkInsightConfiguration() {
 
 checkInsightConfiguration();
 
+// Treat server/model text as textContent, never executable HTML.
 function element(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -69,16 +80,19 @@ function element(tag, className, text) {
   return node;
 }
 
+// Resolve stable skill IDs for display, retaining an ID if a label is unavailable.
 function skillList(ids) {
   return ids.map((id) => skillNames.get(id) || id).join(", ");
 }
 
+// Keep inline validation and the degree field's accessible error state in sync.
 function showErrors(messages) {
   errors.replaceChildren(...messages.map((message) => element("div", "", message)));
   errors.hidden = messages.length === 0;
   degree.setAttribute("aria-invalid", String(!degree.value && messages.length > 0));
 }
 
+// A profile edit invalidates previous matches until the user analyses again.
 function resetResults() {
   clearInsight();
   analysisData = null;
@@ -98,6 +112,7 @@ function resetResults() {
   showErrors([]);
 }
 
+// Profile changes clear stale output; search only filters visible skill choices.
 degree.addEventListener("change", resetResults);
 checkboxes.forEach((input) => input.addEventListener("change", resetResults));
 search.addEventListener("input", () => {
@@ -111,6 +126,7 @@ search.addEventListener("input", () => {
   document.querySelector("#no-skills").hidden = visible > 0;
 });
 
+// Open catalogue-backed HTTP(S) sources without allowing access to the opener page.
 function sourceLink(label, url) {
   const link = element("a", "", label);
   // Catalogue validation also checks the scheme on the server.
@@ -121,6 +137,7 @@ function sourceLink(label, url) {
   return link;
 }
 
+// Display raw coverage and the scenario estimate separately for one ranked career.
 function renderCard(match, index) {
   const card = element("article", "career-card");
   const rank = element("div", "card-rank");
@@ -189,6 +206,7 @@ function renderCard(match, index) {
   return card;
 }
 
+// Unknown evidence is an explicit state, not a substitute for a Stable classification.
 function trendBadge(direction) {
   return element(
     "span",
@@ -199,6 +217,7 @@ function trendBadge(direction) {
   );
 }
 
+// Attach the evidence's metric, geography and correct date label to each direction.
 function renderTrend(trend) {
   const card = element("article", "trend-card");
   card.append(
@@ -238,6 +257,7 @@ function renderTrend(trend) {
   return card;
 }
 
+// Show local observations independently of ranking; missing evidence is not zero.
 function renderMarket(signal) {
   const target = document.querySelector("#market-content");
   target.replaceChildren();
@@ -265,6 +285,7 @@ function renderMarket(signal) {
     records.append(card);
   });
   target.append(records);
+  // Only the backend decides whether quarters are comparable for a percent change.
   if (signal.change_percent !== null) {
     target.append(
       element(
@@ -277,6 +298,7 @@ function renderMarket(signal) {
   target.append(element("p", "field-help", signal.comparison_note));
 }
 
+// Preserve the backend's prerequisite order, cost notes and estimate/provider labels.
 function renderLearningPath(match) {
   const path = match.learning_path;
   const steps = document.querySelector("#learning-steps");
@@ -334,6 +356,7 @@ function renderLearningPath(match) {
       element("p", "", course.duration_note),
       element("p", "", course.cost_note),
     );
+    // Disclose preparation outside the plan without silently assigning extra courses.
     if (step.suggested_background_ids.length) {
       body.append(
         element(
@@ -369,6 +392,7 @@ function renderLearningPath(match) {
   });
 }
 
+// Pair ORBI's contribution rationale with the referenced official UN definitions.
 function sdgCard(label, mapping) {
   const card = element("article", "sdg-card");
   card.append(element("h4", "", label));
@@ -391,6 +415,7 @@ function sdgCard(label, mapping) {
   return card;
 }
 
+// Update chosen-career and required-skill contributions from the same result object.
 function renderSDGs(match) {
   document
     .querySelector("#career-sdg")
@@ -404,6 +429,7 @@ function renderSDGs(match) {
     );
 }
 
+// A career switch refreshes all dependent detail panels and invalidates old advice.
 function renderGap() {
   const match = matches.find(
     (item) => item.career.career_id === document.querySelector("#career-select").value,
@@ -442,6 +468,7 @@ function renderGap() {
 
 document.querySelector("#career-select").addEventListener("change", renderGap);
 
+// Render one complete analysis response so profile/scenario panels stay consistent.
 function renderResults(data, scroll = true) {
   analysisData = data;
   matches = data.matches;
@@ -449,6 +476,7 @@ function renderResults(data, scroll = true) {
   document.querySelector("#scenario-state").textContent = data.trends_available
     ? `${data.scenario === "fast" ? "Fast" : "Moderate"} scenario · multiplier ${data.scenario_multiplier} · estimate`
     : "Trend evidence unavailable · skill coverage ranking";
+  // Group unresolved evidence separately while keeping its coverage count visible.
   const supportedTrends = data.skill_trends.filter(
     (trend) => trend.trend_direction !== "unknown",
   );
@@ -505,6 +533,7 @@ function renderResults(data, scroll = true) {
     .replaceChildren(
       ...data.excluded_records.map((message) => element("li", "", message)),
     );
+  // Make excluded or invalid evidence discoverable instead of hiding load problems.
   const evidenceIssues = [
     ...data.trend_issues,
     ...data.market_issues,
@@ -528,6 +557,7 @@ function renderResults(data, scroll = true) {
     });
 }
 
+// Validate basic inputs for fast feedback, then let Flask perform authoritative checks.
 async function analyseProfile(scroll = true) {
   clearInsight();
   analysisData = null;
@@ -546,6 +576,7 @@ async function analyseProfile(scroll = true) {
   controller?.abort();
   const requestController = new AbortController();
   controller = requestController;
+  // The version check also protects against a response arriving after fetch abort.
   const current = ++requestVersion;
   const timeout = setTimeout(() => requestController.abort(), 15000);
   submitButton.disabled = true;
@@ -593,6 +624,7 @@ async function analyseProfile(scroll = true) {
   }
 }
 
+// Show immediate local feedback while waiting; clearly distinguish it from AI output.
 function showInstantSummary(match) {
   const summary = element("section", "insight-result");
   summary.append(
@@ -629,6 +661,8 @@ function showInstantSummary(match) {
   document.querySelector("#insight-output").replaceChildren(summary);
 }
 
+// AI runs only on this explicit action. Reuse its request variant during a pending
+// attempt; after success, another perspective gets a fresh generation identifier.
 insightButton.addEventListener("click", async () => {
   if (!analysisData) return;
   const match = matches.find(
@@ -669,6 +703,7 @@ insightButton.addEventListener("click", async () => {
       signal: requestController.signal,
     });
     let data = await response.json();
+    // Current public mode returns directly; this loop supports legacy queued jobs.
     while (response.status === 202) {
       if (version !== insightVersion) return;
       if (requestController.signal.aborted) {
@@ -695,6 +730,7 @@ insightButton.addEventListener("click", async () => {
       message.textContent = (data.errors || ["AI insight is unavailable."]).join(" ");
       return;
     }
+    // Render the accepted proposals with backend-resolved resource links.
     const panels = data.recommendations.map((advice) => {
       const panel = element("section", "insight-result");
       panel.append(
@@ -721,6 +757,7 @@ insightButton.addEventListener("click", async () => {
     });
     output.replaceChildren(...panels);
     hasInsight = true;
+    // A new perspective may incur a new inference charge only when clicked again.
     nextInsightVariant = crypto.randomUUID();
     message.textContent = data.method;
     if (data.timings?.queue_seconds !== undefined) {
@@ -729,6 +766,7 @@ insightButton.addEventListener("click", async () => {
     if (data.timings?.generation_seconds !== undefined) {
       message.textContent += ` Generation: ${data.timings.generation_seconds}s.`;
     }
+    // Total direct API time includes network overhead; it is not model time alone.
     if (data.timings?.request_seconds !== undefined) {
       message.textContent += ` Direct API request: ${data.timings.request_seconds}s.`;
     }
@@ -755,6 +793,7 @@ insightButton.addEventListener("click", async () => {
   }
 });
 
+// Keep form submission on-page; changing a scenario reanalyses without auto-scrolling.
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   analyseProfile();
