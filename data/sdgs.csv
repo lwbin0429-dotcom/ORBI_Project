@@ -8,8 +8,8 @@
 # those mappings are ORBI interpretations, not UN endorsement.
 #
 sdg_id,sdg_name,source_url,source_checked_at
-4,"Quality Education",https://sdgs.un.org/goals/goal4,2026-10-22
-8,"Decent Work and Economic Growth",https://sdgs.un.org/goals/goal8,2026-10-22
-9,"Industry, Innovation and Infrastructure",https://sdgs.un.org/goals/goal9,2026-10-22
-10,"Reduced Inequalities",https://sdgs.un.org/goals/goal10,2026-10-22
-16,"Peace, Justice and Strong Institutions",https://sdgs.un.org/goals/goal16,2026-10-22
+4,"Quality Education",https://sdgs.un.org/goals/goal4 ,2026-10-22
+8,"Decent Work and Economic Growth",https://sdgs.un.org/goals/goal8 ,2026-10-22
+9,"Industry, Innovation and Infrastructure",https://sdgs.un.org/goals/goal9 ,2026-10-22
+10,"Reduced Inequalities",https://sdgs.un.org/goals/goal10 ,2026-10-22
+16,"Peace, Justice and Strong Institutions",https://sdgs.un.org/goals/goal16 ,2026-10-22

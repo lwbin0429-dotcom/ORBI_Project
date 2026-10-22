@@ -641,16 +641,18 @@ h2 {
 /* Profile form and skill selection: selected/disabled/error states share this section. */
 
 .profile-section {
-  padding-block: 80px;
-  background: #101012;
-  border-block: 1px solid #ffffff08;
+  /* The workspace has its own surfaces; landing-page styling stays separate. */
+  padding-block: 88px;
+  background: radial-gradient(ellipse at 0% 20%, #ff3c460a, transparent 45%), #101012;
+  border-block: 1px solid #ffffff0d;
   scroll-margin-top: 0;
 }
 
 .profile-layout {
   display: grid;
-  grid-template-columns: 0.85fr 1.3fr;
-  gap: 90px;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.3fr);
+  gap: 72px;
+  align-items: start;
 }
 
 .profile-intro {
@@ -658,29 +660,71 @@ h2 {
 }
 
 .profile-intro h2 {
-  font-size: 45px;
-  line-height: 1.18;
+  font-size: 52px;
+  line-height: 1.08;
   letter-spacing: -2px;
-  margin: 0 0 24px;
+  margin: 0 0 22px;
 }
 
 .profile-intro h2 span {
-  color: #8c8b95;
+  color: #d5c8c4;
 }
 
 .profile-intro > p:not(.eyebrow) {
   color: var(--muted);
   font-size: 14px;
+  max-width: 310px;
+}
+
+/* Numbered guide is informational, not a live completion indicator. */
+.workspace-guide {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  margin: 34px 0 0;
+  list-style: none;
+}
+
+.workspace-guide li {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 15px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.guide-number {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #ff3c463b;
+  border-radius: 12px;
+  background: #ff3c460b;
+  color: #ff9299;
+  font: 500 11px var(--display);
+}
+
+.workspace-guide strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.workspace-guide p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .privacy-note {
   display: flex;
   gap: 13px;
   align-items: flex-start;
-  margin-top: 65px;
-  border-top: 1px solid var(--line);
-  padding-top: 22px;
-  max-width: 300px;
+  margin-top: 28px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  max-width: 350px;
 }
 
 .privacy-note > span {
@@ -692,13 +736,16 @@ h2 {
   font-size: 11px;
   line-height: 1.8;
   color: #92919b;
+  margin: 0;
 }
 
 .profile-panel {
-  background: var(--panel);
-  border: 1px solid #303034;
-  border-radius: 9px;
-  padding: 30px;
+  background: linear-gradient(145deg, #212124, #171719 65%);
+  border: 1px solid #ffffff1c;
+  border-radius: 24px;
+  padding: 36px;
+  box-shadow: 0 24px 70px #00000030;
+  min-width: 0;
 }
 
 .panel-top {
@@ -706,11 +753,13 @@ h2 {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: 30px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
 }
 
 .panel-top h3 {
-  font-size: 19px;
+  font-size: 23px;
   font-weight: 500;
   letter-spacing: -0.5px;
   margin: 0;
@@ -731,24 +780,27 @@ h2 {
   width: 100%;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   margin-bottom: 10px;
 }
 
 .field-label > span {
   font: 500 10px var(--display);
-  color: #74737e;
+  color: #b6a5a6;
+  border: 1px solid #ffffff12;
+  border-radius: 6px;
+  padding: 3px 7px;
 }
 
 select {
   border: 1px solid #39393f;
   background: #1b1b1f;
   color: #e1dfe6;
-  border-radius: 5px;
-  padding: 13px 32px 13px 13px;
+  border-radius: 12px;
+  padding: 15px 32px 15px 15px;
   width: 100%;
-  font-size: 12px;
+  font-size: 13px;
   max-width: 100%;
   text-overflow: ellipsis;
 }
@@ -758,7 +810,7 @@ select:focus {
 }
 
 .field-help {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.8;
   color: #9998a2;
   margin: 9px 0 22px;
@@ -789,8 +841,10 @@ legend {
   gap: 9px;
   min-width: 0;
   flex: 1;
-  border-bottom: 1px solid #333339;
-  padding-bottom: 7px;
+  border: 1px solid #ffffff12;
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: #111113;
 }
 
 .search-box > span {
@@ -806,7 +860,7 @@ input[type="search"] {
   color: var(--text);
   min-width: 0;
   width: 100%;
-  font-size: 11px;
+  font-size: 12px;
   padding: 3px;
 }
 
@@ -822,7 +876,7 @@ input::placeholder {
 
 .skill-grid {
   display: flex;
-  gap: 7px;
+  gap: 9px;
   flex-wrap: wrap;
 }
 
@@ -831,10 +885,12 @@ input::placeholder {
   display: flex;
   align-items: center;
   cursor: pointer;
-  border: 1px solid #36363d;
-  border-radius: 4px;
-  background: #1b1b20;
-  transition: all 0.15s;
+  border: 1px solid #ffffff1c;
+  border-radius: 9px;
+  background: #ffffff04;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
   max-width: 100%;
 }
 
@@ -846,8 +902,8 @@ input::placeholder {
 }
 
 .skill-chip > span {
-  font-size: 10px;
-  padding: 7px 3px 7px 10px;
+  font-size: 12px;
+  padding: 9px 3px 9px 12px;
   overflow-wrap: anywhere;
 }
 
@@ -864,9 +920,9 @@ input::placeholder {
 }
 
 .skill-chip:has(input:checked) {
-  background: #3c1a20;
-  border-color: #c43b48;
-  color: #ffbbc0;
+  background: #ff3c461a;
+  border-color: #ff606b;
+  color: #ffd5d8;
 }
 
 .skill-chip:has(input:checked) i {
@@ -882,6 +938,8 @@ input::placeholder {
 .analyse-button {
   width: 100%;
   margin-top: 2px;
+  border-radius: 12px;
+  padding-block: 18px;
 }
 
 .form-footnote {
@@ -910,20 +968,27 @@ input::placeholder {
 /* Results and career cards: keep raw coverage visually distinct from scenario scores. */
 
 .results-section {
-  padding-block: 80px 90px;
+  padding-block: 88px 100px;
   min-height: 430px;
 }
 
 .empty-state {
-  border: 1px dashed #33333b;
-  border-radius: 8px;
+  border: 1px solid #ffffff16;
+  border-radius: 24px;
   text-align: center;
-  padding: 43px 22px;
-  background: radial-gradient(ellipse at top, #ff3c4607, transparent 65%);
+  padding: 64px 24px;
+  background: radial-gradient(ellipse at top, #ff3c460c, transparent 65%), #141416;
 }
 
 .empty-icon {
-  display: block;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin-inline: auto;
+  border: 1px solid #ff3c4640;
+  border-radius: 17px;
+  background: #ff3c460d;
   color: var(--red);
   font-size: 30px;
   margin-bottom: 12px;
@@ -954,15 +1019,17 @@ input::placeholder {
 .profile-summary {
   font-size: 13px;
   color: #d7d5dc;
-  border-left: 2px solid var(--red);
-  padding-left: 14px;
-  margin-bottom: 13px;
+  border: 1px solid #ff3c4630;
+  border-radius: 14px;
+  background: #ff3c460a;
+  padding: 17px 20px;
+  margin-bottom: 18px;
 }
 
 .results-explainer,
 .method-note {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.9;
   max-width: 900px;
 }
@@ -974,24 +1041,26 @@ input::placeholder {
 .career-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 20px;
   margin-top: 24px;
 }
 
 .career-card {
-  border: 1px solid #323238;
-  border-radius: 7px;
-  background: var(--panel);
-  padding: 23px;
+  border: 1px solid #ffffff1a;
+  border-radius: 20px;
+  background: linear-gradient(155deg, #202023, #141416 70%);
+  padding: 28px;
   position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
+  box-shadow: 0 12px 36px #00000018;
 }
 
 .career-card:first-child {
-  border-top: 2px solid var(--red);
-  padding-top: 22px;
+  border: 1px solid #ff3c4670;
+  background: linear-gradient(155deg, #3a2025, #191517 65%);
+  padding-top: 28px;
 }
 
 .card-rank {
@@ -1012,7 +1081,7 @@ input::placeholder {
 }
 
 .career-card h3 {
-  font-size: 19px;
+  font-size: 22px;
   line-height: 1.35;
   letter-spacing: -0.5px;
   min-height: 77px;
@@ -1022,7 +1091,7 @@ input::placeholder {
 }
 
 .coverage {
-  font: 500 42px var(--display);
+  font: 500 54px var(--display);
   letter-spacing: -2px;
 }
 
@@ -1034,7 +1103,7 @@ input::placeholder {
 }
 
 .coverage-track {
-  height: 4px;
+  height: 6px;
   border-radius: 4px;
   background: #333137;
   overflow: hidden;
@@ -1044,7 +1113,8 @@ input::placeholder {
 .coverage-track span {
   display: block;
   height: 100%;
-  background: var(--red);
+  background: linear-gradient(90deg, #d52d42, #ff7c85);
+  border-radius: inherit;
 }
 
 .coverage-count {
@@ -1054,7 +1124,7 @@ input::placeholder {
 }
 
 .skill-list {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.8;
   color: #b5b2be;
   margin-bottom: 15px;
@@ -1099,11 +1169,11 @@ input::placeholder {
 /* Selected career skill gap */
 
 .gap-panel {
-  margin-top: 25px;
-  background: var(--panel);
-  border: 1px solid #323238;
-  border-radius: 7px;
-  padding: 28px;
+  margin-top: 28px;
+  background: #171719;
+  border: 1px solid #ffffff16;
+  border-radius: 22px;
+  padding: 32px;
 }
 
 .gap-heading {
@@ -1183,13 +1253,15 @@ td:last-child {
 }
 
 .source-details {
-  font-size: 11px;
+  font-size: 12px;
   margin-top: 20px;
   color: var(--muted);
 }
 
 .source-details summary {
   cursor: pointer;
+  padding-block: 10px;
+  color: #c9c3ca;
 }
 
 /* Footer and accessibility helpers */
@@ -1248,6 +1320,8 @@ td:last-child {
 
 .trend-section {
   margin-top: 30px;
+  border-top: 1px solid var(--line);
+  padding-top: 28px;
 }
 
 .trend-section h3,
@@ -1266,10 +1340,10 @@ td:last-child {
 }
 
 .trend-card {
-  padding: 16px;
-  background: var(--panel);
+  padding: 20px;
+  background: #ffffff03;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 16px;
   min-width: 0;
 }
 
@@ -1282,8 +1356,8 @@ td:last-child {
   display: inline-block;
   border: 1px solid #55515d;
   color: #bbb7c3;
-  border-radius: 4px;
-  padding: 4px 7px;
+  border-radius: 20px;
+  padding: 4px 10px;
   font-size: 10px;
 }
 
@@ -1325,10 +1399,10 @@ td:last-child {
 }
 
 .scenario-panel {
-  padding: 24px;
-  background: var(--panel);
+  padding: 28px;
+  background: #171719;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 20px;
   margin: 26px 0;
 }
 
@@ -1343,8 +1417,9 @@ td:last-child {
   align-items: center;
   gap: 12px;
   border: 1px solid var(--line);
-  border-radius: 5px;
-  padding: 12px 18px;
+  border-radius: 12px;
+  padding: 15px 20px;
+  flex: 1 1 180px;
   cursor: pointer;
 }
 
@@ -1393,7 +1468,8 @@ td:last-child {
 .market-record {
   border: 1px solid var(--line);
   padding: 20px;
-  border-radius: 6px;
+  border-radius: 16px;
+  background: #ffffff03;
   font-size: 12px;
 }
 
@@ -1751,15 +1827,22 @@ td:last-child {
   grid-template-columns: 2.75rem minmax(0, 1fr);
   gap: 1rem;
   padding: clamp(1rem, 3vw, 1.5rem);
-  border: 1px solid #34343b;
-  border-radius: 12px;
-  background: #141417;
+  border: 1px solid #ffffff14;
+  border-radius: 16px;
+  background: #ffffff03;
 }
 
 .learning-number {
   color: #ff4855;
   font-size: 1.3rem;
   font-weight: 700;
+  display: grid;
+  place-items: center;
+  align-self: start;
+  min-height: 44px;
+  border-radius: 12px;
+  background: #ff3c4610;
+  border: 1px solid #ff3c462b;
 }
 
 .learning-body {
@@ -1808,8 +1891,8 @@ td:last-child {
   padding: 1.25rem;
   margin-top: 1rem;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--panel);
+  border-radius: 16px;
+  background: #ffffff03;
   overflow-wrap: anywhere;
 }
 
@@ -1830,6 +1913,7 @@ td:last-child {
 
 .insight-panel > button {
   margin: 0.75rem 0;
+  border-radius: 12px;
 }
 
 .insight-result p {
