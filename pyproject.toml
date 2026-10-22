@@ -1,0 +1,8 @@
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.djlint]
+profile = "jinja"
+indent = 2
+max_line_length = 88

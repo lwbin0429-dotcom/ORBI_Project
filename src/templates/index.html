@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    />
+    <meta
+      name="theme-color"
+      content="#0b0b0d"
+    />
+    <meta
+      name="description"
+      content="Discover computing career paths through your skills. Explore transparent career matches and understand what to learn next with ORBI."
+    />
+    <title>ORBI — Find your next direction</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <script
+      src="{{ url_for('static', filename='app.js') }}"
+      defer
+    ></script>
+  </head>
+  <body>
+    <a
+      class="skip-link"
+      href="#profile"
+    >
+      Skip to skills profile
+    </a>
+    <header class="site-header">
+      <div class="shell nav-wrap">
+        <a
+          class="wordmark"
+          href="#"
+          aria-label="ORBI home"
+        >
+          <span
+            class="brand-orbit"
+            aria-hidden="true"
+          ></span>
+          ORBI
+          <span class="brand-dot">.</span>
+        </a>
+        <nav aria-label="Main navigation">
+          <a href="#how-it-works">How it works</a>
+          <a href="#profile">Skills profile</a>
+          <a href="#results">Career matches</a>
+        </nav>
+        <a
+          class="nav-cta"
+          href="#profile"
+        >
+          Find your direction
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <section
+        class="hero shell"
+        aria-labelledby="hero-title"
+      >
+        <div class="hero-copy">
+          <p class="eyebrow">
+            <span class="status-dot"></span>
+            BUILT FOR THE NEXT GENERATION
+          </p>
+          <h1 id="hero-title">
+            Your future.
+            <br />
+            <span>In your hands.</span>
+          </h1>
+          <p class="hero-description">
+            The world of work is changing. Find where your skills can take you — and
+            discover what comes next.
+          </p>
+          <a
+            class="button primary"
+            href="#profile"
+          >
+            Explore my future
+            <span aria-hidden="true">↗</span>
+          </a>
+          <p class="hero-note">
+            <span aria-hidden="true">◈</span>
+            No sign-up. Just you and your potential.
+          </p>
+        </div>
+        <div
+          class="orbit-scene"
+          aria-hidden="true"
+        >
+          <div class="orbit-grid"></div>
+          <div class="orbit orbit-outer"></div>
+          <div class="orbit orbit-middle"></div>
+          <div class="orbit orbit-inner"></div>
+          <div class="orbit-axis"></div>
+          <span class="satellite satellite-one"></span>
+          <span class="satellite satellite-two"></span>
+          <div class="orbit-core">
+            <span class="core-mark">
+              O
+              <span>↗</span>
+            </span>
+            <span>YOUR NEXT CHAPTER</span>
+          </div>
+          <span class="orbit-label label-one">
+            <i></i>
+            Software & development
+          </span>
+          <span class="orbit-label label-two">
+            <i></i>
+            Data & intelligence
+          </span>
+          <span class="orbit-label label-three">
+            <i></i>
+            Security & systems
+          </span>
+          <span class="scene-coordinate">A NEW DIRECTION STARTS WITH YOU</span>
+        </div>
+      </section>
+
+      <div class="shell">
+        <div class="facts-strip">
+          <p>
+            <strong>{{ degrees|length|string if degrees else '—' }}</strong>
+            <span>Computing degrees</span>
+          </p>
+          <p>
+            <strong>{{ skills|length|string if skills else '—' }}</strong>
+            <span>Skills to explore</span>
+          </p>
+          <p>
+            <strong>{{ career_count }}</strong>
+            <span>Sourced career paths</span>
+          </p>
+          <p class="facts-message">
+            One profile.
+            <br />
+            <span>A world of possibility.</span>
+          </p>
+        </div>
+      </div>
+
+      <section
+        id="how-it-works"
+        class="shell how-section"
+        aria-labelledby="how-title"
+      >
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">THE WAY FORWARD</p>
+            <h2 id="how-title">Clarity starts here.</h2>
+          </div>
+          <p>
+            Know your starting point.
+            <br />
+            See your next move.
+          </p>
+        </div>
+        <div class="steps">
+          <article>
+            <span class="step-number">01</span>
+            <h3>Start with your skills</h3>
+            <p>Choose your degree and tell us what you already know.</p>
+          </article>
+          <article>
+            <span class="step-number">02</span>
+            <h3>Discover your direction</h3>
+            <p>Compare career paths with clear, skill-based matching.</p>
+          </article>
+          <article>
+            <span class="step-number">03</span>
+            <h3>See the gaps. Move forward.</h3>
+            <p>Understand the skills you have and those you can build next.</p>
+          </article>
+        </div>
+      </section>
+
+      <section
+        id="profile"
+        class="profile-section"
+        aria-labelledby="profile-title"
+      >
+        <div class="shell profile-layout">
+          <aside class="profile-intro">
+            <p class="eyebrow">01 / YOUR STARTING POINT</p>
+            <h2 id="profile-title">
+              Big ambitions.
+              <br />
+              <span>Start with you.</span>
+            </h2>
+            <p>
+              You bring the potential.
+              <br />
+              Let’s find the direction.
+            </p>
+            <div class="privacy-note">
+              <span aria-hidden="true">◈</span>
+              <p>
+                No personal details or CV needed.
+                <br />
+                Your selections stay in this tab until you refresh or close it.
+              </p>
+            </div>
+          </aside>
+          <form
+            id="profile-form"
+            class="profile-panel"
+            novalidate
+          >
+            <div class="panel-top">
+              <h3>Your skills profile</h3>
+              <span class="small-tag">LET’S BEGIN</span>
+            </div>
+            <label
+              class="field-label"
+              for="degree"
+            >
+              Degree programme
+              <span>01</span>
+            </label>
+            <div class="select-wrap">
+              <select
+                id="degree"
+                name="degree_id"
+                required
+                {% if catalogue_error %}disabled{% endif %}
+              >
+                <option
+                  value=""
+                  disabled
+                  selected
+                >
+                  Select your degree programme
+                </option>
+                {% for degree in degrees %}
+                  <option value="{{ degree.degree_id }}">{{ degree.degree_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <p class="field-help">
+              Your degree adds context. It never automatically adds skills.
+            </p>
+            <fieldset>
+              <legend class="field-label">
+                Your current skills
+                <span>02</span>
+              </legend>
+              <div class="skills-toolbar">
+                <label
+                  class="search-box"
+                  for="skill-search"
+                >
+                  <span aria-hidden="true">⌕</span>
+                  <input
+                    type="search"
+                    id="skill-search"
+                    placeholder="Search skills…"
+                    autocomplete="off"
+                    {% if catalogue_error %}disabled{% endif %}
+                  />
+                </label>
+                <span
+                  id="skill-count"
+                  aria-live="polite"
+                >
+                  0 selected
+                </span>
+              </div>
+              <div
+                class="skill-grid"
+                id="skill-grid"
+              >
+                {% for skill in skills %}
+                  <label class="skill-chip">
+                    <input
+                      type="checkbox"
+                      name="skill_ids"
+                      value="{{ skill.skill_id }}"
+                    />
+                    <span>{{ skill.skill_name }}</span>
+                    <i aria-hidden="true">+</i>
+                  </label>
+                {% endfor %}
+              </div>
+              <p
+                id="no-skills"
+                class="field-help"
+                hidden
+              >
+                No skills found. Try a different search.
+              </p>
+              <p class="field-help">
+                Select at least one skill you already have. You can change these
+                anytime.
+              </p>
+            </fieldset>
+            <div
+              id="form-errors"
+              class="notice error"
+              role="alert"
+              {% if not catalogue_error %}hidden{% endif %}
+            >
+              {{ catalogue_error or '' }}
+            </div>
+            <button
+              class="button primary analyse-button"
+              type="submit"
+              {% if catalogue_error %}disabled{% endif %}
+            >
+              <span id="analyse-label">Analyse My Future</span>
+              <span aria-hidden="true">↗</span>
+            </button>
+            <p class="form-footnote">Self-reported skills. No account required.</p>
+            <noscript>
+              <p class="notice">
+                Enable JavaScript to select skills and view your career matches.
+              </p>
+            </noscript>
+          </form>
+        </div>
+      </section>
+
+      <section
+        id="results"
+        class="shell results-section"
+        aria-labelledby="results-title"
+      >
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">02 / YOUR POSSIBILITIES</p>
+            <h2 id="results-title">Find your next direction.</h2>
+          </div>
+          <span
+            id="results-status"
+            class="small-tag"
+          >
+            WAITING FOR YOUR PROFILE
+          </span>
+        </div>
+        <div
+          id="results-empty"
+          class="empty-state"
+        >
+          <span
+            class="empty-icon"
+            aria-hidden="true"
+          >
+            ↗
+          </span>
+          <h3>Your next chapter starts above.</h3>
+          <p>
+            Choose your degree and skills, then analyse your profile to explore career
+            matches.
+          </p>
+          <a
+            class="text-link"
+            href="#profile"
+          >
+            Build your profile
+            <span aria-hidden="true">↑</span>
+          </a>
+        </div>
+        <div
+          id="results-content"
+          hidden
+        >
+          <p
+            id="profile-summary"
+            class="profile-summary"
+          ></p>
+          <p class="results-explainer">
+            Skill coverage = matched required skills ÷ all required skills × 100%. This
+            covers ORBI’s curated skill subset and is not employment probability or
+            complete job readiness.
+          </p>
+          <div
+            id="results-warnings"
+            aria-live="polite"
+          ></div>
+          <div
+            id="career-cards"
+            class="career-grid"
+          ></div>
+          <section
+            id="gap-section"
+            class="gap-panel"
+            aria-labelledby="gap-title"
+            hidden
+          >
+            <div class="gap-heading">
+              <div>
+                <p class="eyebrow">YOUR NEXT MOVE</p>
+                <h3 id="gap-title">A closer look at your skills.</h3>
+              </div>
+              <label
+                for="career-select"
+                class="sr-only"
+              >
+                Select career to explore
+              </label>
+              <select id="career-select"></select>
+            </div>
+            <p
+              id="gap-career-name"
+              class="gap-career-name"
+            ></p>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Required skill</th>
+                    <th scope="col">Your profile</th>
+                  </tr>
+                </thead>
+                <tbody id="gap-rows"></tbody>
+              </table>
+            </div>
+            <p
+              id="evidence-note"
+              class="field-help"
+            ></p>
+          </section>
+          <details
+            id="excluded-details"
+            class="source-details"
+            hidden
+          >
+            <summary>Catalogue records excluded from matching</summary>
+            <ul id="excluded-list"></ul>
+          </details>
+          <p class="method-note">
+            How we rank: skill coverage first; degree relevance only breaks exact ties,
+            then career name. Cross-degree paths are included. ORBI curates skill
+            subsets and degree associations from the linked sources. O*NET describes
+            U.S. occupations; local requirements may differ.
+          </p>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <a
+          class="wordmark"
+          href="#"
+        >
+          ORBI
+          <span class="brand-dot">.</span>
+        </a>
+        <p>Your potential. A new perspective.</p>
+        <span>Career exploration, with you in control.</span>
+      </div>
+    </footer>
+    <script
+      id="catalogue-data"
+      type="application/json"
+    >
+      {{ catalogue|tojson }}
+    </script>
+  </body>
+</html>

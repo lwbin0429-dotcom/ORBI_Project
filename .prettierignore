@@ -1,0 +1,3 @@
+# Format Jinja templates with a Jinja-aware formatter or manually.
+# Generic HTML formatting can split template syntax inside attributes.
+src/templates/**/*.html

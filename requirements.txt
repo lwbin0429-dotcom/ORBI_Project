@@ -1,2 +1,2 @@
-# Add your project dependencies here, one per line.
+Flask>=3.1,<4
 runpod

@@ -1,4 +1,4 @@
-run = "python src/main.py"
+run = "HOST=0.0.0.0 PORT=8000 python src/main.py"
 entrypoint = "src/main.py"
 
 [nix]

@@ -1,6 +1,89 @@
-# Project Name
+# ORBI
 
-> A one-sentence description of what your project does and who it is for.
+> A career exploration and reskilling platform for students and graduates from five computing degree programmes.
+
+## Current implementation — Parts 1 and 2
+
+Part 1 provides an English-language HTML/CSS page for selecting one of the five supported
+degrees and multiple self-reported skills. Click **Analyse My Future** to validate
+and confirm the profile. A degree and at least one skill are required. Changing
+either input clears the previous confirmation; submit again to confirm the new
+profile. Choosing a degree never automatically selects skills.
+
+Profiles stay in browser memory until the tab is refreshed or closed. The HTML/CSS
+frontend sends degree and skill IDs to a Flask API for validation and matching.
+No profile is written to disk, and no identity or CV is requested. Parts 1 and 2
+do not call RunPod or require API credentials.
+
+Part 2 ranks 15 sourced occupations from `data/careers.csv` and shows the top
+three (or fewer if fewer valid records exist). Each result includes skill coverage,
+matched and missing skills, occupation and skill evidence links, and a source check
+date. Select a career below the results to inspect its required skills and mapping
+explanation. No API key or network connection is needed to calculate matches.
+
+```text
+Skill coverage (%) = 100 × matched required skills / all required skills
+```
+
+Scores measure coverage of ORBI's curated skill subset, not employment probability
+or complete job readiness. All careers remain eligible across degrees. Degree
+relevance breaks exact score ties only; remaining ties use career name and ID.
+Sorting uses exact fractions before display rounding. A 0% result is labelled as
+an exploration option. Changing inputs hides old results until you submit again.
+
+The catalogue lives in `data/degrees.csv`, `data/skills.csv` and `data/careers.csv`.
+The 22 skills have stable IDs. Occupation titles and task/technology evidence were
+checked against O*NET OnLine on 21 October 2026. Skill subsets and degree
+associations are ORBI interpretations; O*NET is a U.S. occupational source, not
+local vacancy data. See [data provenance](data/README.md) for curation details.
+Missing required skills, unknown skill/degree IDs, or missing source evidence
+exclude a career with an explanation. File-level catalogue errors leave profile
+intake available and display a warning.
+
+SDG columns remain reserved and empty until Part 5. Trends, courses and AI
+explanations are not implemented yet. The remaining competition sections below
+are a submission template and still need to be completed.
+
+### Quick start
+
+Requires Python 3.10 or newer. From the repository root:
+
+```bash
+python -m pip install -r requirements.txt
+python src/main.py
+```
+
+Open http://localhost:8000 in your browser. On Replit, the Run button starts Flask
+on port 8000. Set HOST and PORT environment variables to change the bind address
+and port. The frontend uses semantic HTML, responsive CSS and vanilla JavaScript
+in a black and red theme.
+
+### Implementation files
+
+- `src/main.py`: Flask page route and matching API.
+- `src/templates/index.html`: English-language page structure.
+- `src/static/style.css`: responsive black and red styling.
+- `src/static/app.js`: skill search, selections and results interaction.
+- `src/profile_data.py`: CSV loading and input validation.
+- `src/career_matching.py`: career validation, skill gaps and deterministic ranking.
+- `data/degrees.csv`: exactly five supported degree programmes.
+- `data/skills.csv`: editable computing skills catalogue.
+- `data/careers.csv`: 15 careers with required skills and source evidence.
+- `data/README.md`: data provenance and editing rules.
+- `tests/test_profile.py`: profile validation and data integrity checks.
+- `tests/test_career_matching.py`: scoring, sorting and invalid records.
+- `tests/test_web.py`: page, assets, API validation and matching responses.
+
+Run checks with `python -m unittest discover tests` after installing dependencies.
+
+### Code formatting
+
+Keep source expanded and readable: one CSS declaration or code statement per
+line, indented HTML elements, and wrapped long expressions. Use two spaces for
+HTML/CSS/JavaScript and four for Python. Follow `.editorconfig`,
+`.prettierrc.json`, `pyproject.toml` and [project instructions](AGENTS.md).
+Format Jinja templates manually or with a Jinja-aware formatter; they are excluded
+from generic Prettier HTML formatting to preserve template syntax.
 
 ---
 
@@ -98,7 +181,7 @@ User ──► Replit (App / API) ──► RunPod Endpoint (GPU model)
 2. Open the **Secrets** tab (🔒) and add the variables listed in `.env.example`:
    - `RUNPOD_API_KEY`
    - `RUNPOD_ENDPOINT_ID`
-3. Click **Run**. Replit uses the `.replit` file to start `python src/main.py`.
+3. Click **Run**. Replit uses `.replit` to start Flask. Part 1 needs no secrets; RunPod configuration is for a later part.
 
 ### Option 2 — Run Locally
 
