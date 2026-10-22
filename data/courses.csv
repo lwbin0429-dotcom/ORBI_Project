@@ -1,3 +1,13 @@
+# Data: Reviewed courses, modules and tutorials mapped to individual skill IDs.
+# Source: Provider pages linked in course_url and supporting_urls; providers
+# include Harvard CS50, CMU OLI, MDN, MIT OCW, Kaggle, Microsoft Learn,
+# Cisco Networking Academy, OpenLearn, CG Cookie, FastAPI and Canonical/Ubuntu.
+# Used by: src/learning_path.py to plan the chosen career's missing skills;
+# the learning-path UI and AI advice use the validated resource references.
+# learning_order and prerequisite_skill_ids guide the sequence.
+# duration_basis distinguishes provider durations from ORBI planning estimates;
+# cost_note and mapping_note disclose access costs and the resource's scope.
+#
 course_id,skill_id,course_name,provider,course_url,estimated_hours,cost_type,learning_order,source_checked_at,resource_type,duration_basis,duration_note,cost_note,mapping_note,prerequisite_skill_ids,prerequisite_note,supporting_urls
 R01,S01,CS50 Python - foundations (Weeks 0-4),Harvard University / CS50,https://cs50.harvard.edu/python/weeks/0/,24,free,10,2026-10-22,module,orbi_estimate,ORBI planning estimate for study and practice; not a provider-published duration or a guarantee.,Free OpenCourseWare material. An optional edX verified certificate is separate; not required for this step.,ORBI groups the first five modules for Python foundations. The separate Unit Tests module and final project are outside this step.,,,https://cs50.harvard.edu/python/weeks/1/;https://cs50.harvard.edu/python/weeks/2/;https://cs50.harvard.edu/python/weeks/3/;https://cs50.harvard.edu/python/weeks/4/
 R02,S02,Introduction to Programming in Java - Open & Free,Carnegie Mellon University / OLI,https://oli.cmu.edu/courses/introduction-to-programming-in-java-o-f/,24,free,10,2026-10-22,course,orbi_estimate,ORBI planning estimate for study and practice; not a provider-published duration or a guarantee.,"Free independent study materials; no teacher, college credit or completion certificate in this version.","Java variables, control flow, arrays and introductory program development.",,,

@@ -1,3 +1,13 @@
+# Data: Reviewed skill trend directions with evidence, scope and source dates.
+# Source: WEF Future of Jobs 2025, HackerRank, IT Jobs Watch and research;
+# source_name, source_url and supporting_urls identify each reviewed source.
+# Used by: src/trend_data.py for evidence validation and displayed signals;
+# src/career_matching.py applies these codes to Moderate/Fast scenario scores.
+# Directions are ORBI interpretations; unknown means evidence is insufficient.
+# Publication, snapshot and review dates are distinguished by source_date_kind.
+# geography, metric and reference_period limit how each signal can be used.
+# Sources are manually reviewed; the application does not fetch online updates.
+#
 skill_id,trend_direction,source_name,source_url,source_date,reference_period,updated_at,evidence_note,source_skill,source_date_kind,geography,metric,supporting_urls
 S01,rising,HackerRank skill demand analysis 2025,https://www.hackerrank.com/blog/top-developer-skills-in-2025-momentum-not-mayhem/,2025-04-03,2024 vs 2023,2026-10-22,Python assessment invites increased 35.6% year over year; active tests increased 23.1%. Rising uses ORBI's invite-growth threshold above +5%. Historical HackerRank platform hiring activity; not a Malaysia-specific measurement or future forecast.,Python,publication,HackerRank platform; not Malaysia-specific,Year-over-year assessment invite growth,
 S02,stable,HackerRank skill demand analysis 2025,https://www.hackerrank.com/blog/top-developer-skills-in-2025-momentum-not-mayhem/,2025-04-03,2024 vs 2023,2026-10-22,Java assessment invites decreased 4.7% year over year; active tests decreased 7.7%. Stable uses ORBI's primary invite-growth band from -5% to +5%; it does not mean no decline. Historical platform activity; not a Malaysia-specific measurement or future forecast.,Java,publication,HackerRank platform; not Malaysia-specific,Year-over-year assessment invite growth,

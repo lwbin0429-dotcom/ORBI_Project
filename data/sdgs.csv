@@ -1,3 +1,12 @@
+# Data: Names and official definition links for SDGs referenced by ORBI.
+# Source: United Nations Sustainable Development Goals pages at sdgs.un.org;
+# each source_url points to the corresponding official goal definition.
+# Used by: src/sdg_data.py and src/main.py to resolve skill and career SDG IDs
+# into goal names and source links shown in the SDG panels.
+# source_checked_at is ORBI's review date, not the UN publication date.
+# Contribution rationales are stored in skills.csv and careers.csv;
+# those mappings are ORBI interpretations, not UN endorsement.
+#
 sdg_id,sdg_name,source_url,source_checked_at
 4,"Quality Education",https://sdgs.un.org/goals/goal4,2026-10-22
 8,"Decent Work and Economic Growth",https://sdgs.un.org/goals/goal8,2026-10-22

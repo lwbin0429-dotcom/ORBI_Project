@@ -1,3 +1,10 @@
+# Data: The five computing degree programmes supported by ORBI.
+# Source: Degree names from the supplied ORBI project SRS.
+# Used by: src/profile_data.py and src/main.py for degree selection and validation;
+# src/career_matching.py uses degree IDs only to break otherwise equal rankings.
+# Fields: degree_id is the stable ID; degree_name is the display label;
+# description is the shorter subject name. A degree does not grant user skills.
+#
 degree_id,degree_name,description
 D1,Bachelor of Engineering in Software Engineering (Honours),Software Engineering
 D2,Bachelor of Engineering in Digital Media Technology (Honours),Digital Media Technology

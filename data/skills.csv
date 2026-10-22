@@ -1,3 +1,11 @@
+# Data: ORBI's self-reported computing skill catalogue and SDG contributions.
+# Source: Skills are manually curated by ORBI, not an imported official taxonomy.
+# SDG rationales are ORBI interpretations linked to UN definitions in sdgs.csv.
+# Used by: src/profile_data.py for skill selection and input validation;
+# matching, learning paths, SDG panels and AI references use these stable IDs.
+# Fields: skill_id and skill_name identify each skill; sdg_ids uses semicolons;
+# sdg_explanation describes a possible contribution, not measured impact.
+#
 skill_id,skill_name,sdg_ids,sdg_explanation
 S01,Python,8;9,"Python can support automation and research tooling, connecting to technological upgrading (8.2) and research capability (9.5) when used for those purposes."
 S02,Java,8,"Java can support maintainable business applications and process automation, contributing to technological upgrading under target 8.2 when responsibly deployed."

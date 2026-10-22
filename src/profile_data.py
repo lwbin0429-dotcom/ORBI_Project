@@ -1,7 +1,19 @@
 """CSV loading and input validation for the Part 1 profile."""
 
 import csv
+from collections.abc import Iterator
 from pathlib import Path
+from typing import TextIO
+
+
+def _csv_content_lines(handle: TextIO) -> Iterator[str]:
+    """Skip leading # comments and blank lines; preserve every CSV data line."""
+    for line in handle:
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        yield line
+        break
+    yield from handle
 
 
 def _read_csv(
@@ -10,7 +22,7 @@ def _read_csv(
     id_field: str,
 ) -> list[dict[str, str]]:
     with path.open(encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle)
+        reader = csv.DictReader(_csv_content_lines(handle))
         if not required_fields.issubset(reader.fieldnames or []):
             raise ValueError(f"{path.name}: required columns are missing")
         rows = []

@@ -7,6 +7,7 @@ from datetime import date
 from pathlib import Path
 
 from career_matching import _valid_url
+from profile_data import _csv_content_lines
 
 
 TREND_CODES = {"rising": 1, "stable": 0, "declining": -1, "unknown": 0}
@@ -46,7 +47,7 @@ class MarketSignal:
 
 def _records(path: Path, fields: set[str]) -> list[dict[str, str]]:
     with path.open(encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle)
+        reader = csv.DictReader(_csv_content_lines(handle))
         if not fields.issubset(reader.fieldnames or []):
             raise ValueError(f"{path.name}: required columns are missing")
         records = []

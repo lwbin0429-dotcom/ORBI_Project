@@ -1,3 +1,12 @@
+# Data: Raw UK permanent IT job-advert shares and counts for mapped skills.
+# Source: IT Jobs Watch skill pages, recorded in source_url for each row.
+# snapshot_date is the end date of the current six-month source window;
+# previous values refer to the corresponding window in the preceding year.
+# Used by: ORBI's evidence review to support the classifications in trends.csv;
+# this raw-observation file is not loaded by the live Flask analysis routes.
+# Share fields are percentage shares, not percentage growth rates.
+# These UK sample observations do not establish Malaysian demand or AI causation.
+#
 skill_id,source_skill,source_url,snapshot_date,current_share_percent,previous_share_percent,current_ad_count,previous_ad_count
 S04,HTML,https://www.itjobswatch.co.uk/jobs/uk/html.do,2026-10-02,0.91,2.67,1079,1322
 S04,CSS,https://www.itjobswatch.co.uk/jobs/uk/css.do,2026-09-08,0.99,2.39,1109,1175

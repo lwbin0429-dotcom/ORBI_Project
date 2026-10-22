@@ -1,3 +1,12 @@
+# Data: Curated occupations, degree associations, skill requirements and SDGs.
+# Source: O*NET OnLine occupation, task and technology pages, linked per row
+# in source_url and skill_source_url. source_checked_at is ORBI's review date.
+# Used by: src/career_matching.py to compute coverage, gaps and career ranking;
+# src/main.py displays occupation evidence and passes the chosen role to AI.
+# ORBI interprets the skill subsets, degree links and SDG contributions.
+# required_skills and related_degrees contain semicolon-separated IDs.
+# These U.S. occupation records do not establish Malaysian vacancies or salaries.
+#
 career_id,career_name,related_degrees,required_skills,source_name,source_url,sdg_ids,sdg_explanation,source_checked_at,evidence_note,skill_source_url
 C01,Software Developers,D1;D3,S01;S06;S08;S05,O*NET OnLine,https://www.onetonline.org/link/summary/15-1252.00,8;9,Developing reliable software for productive services can support technological upgrading (8.2) and innovation (9.5); impact depends on what is built and who benefits.,2026-10-21,ORBI maps Python and Git from software tools; testing from validation tasks; SQL from database tools.,https://www.onetonline.org/link/tt/15-1252.00/43232405
 C02,Software Quality Assurance Analysts and Testers,D1;D3,S08;S05;S13,O*NET OnLine,https://www.onetonline.org/link/summary/15-1253.00,9,"Testing software used in infrastructure can reduce service failures and improve resilience under target 9.1; this is a possible application, not an occupational impact guarantee.",2026-10-21,ORBI maps testing from test design tasks; SQL from database tools; data analysis from analysing test results.,https://www.onetonline.org/link/summary/15-1253.00
