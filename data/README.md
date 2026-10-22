@@ -49,5 +49,15 @@ are made by Part 2.
   New data is read on each analysis request; no external API calls are made while matching.
 - `sdg_ids` and `sdg_explanation` are reserved for Part 5 and currently blank.
 
-Ranking is based on exact skill coverage, then degree relevance for exact ties,
-then alphabetical career name and ID. There is no trend adjustment in Part 2.
+Part 2 ranking uses exact skill coverage. Part 3 adds sourced skill trend
+adjustments and Moderate/Fast estimates, then breaks ties with coverage, degree
+relevance, career name and ID. See [trend methodology](trend_methodology.md) for
+the evidence scope, formulas, sources and manual update procedure.
+
+The 22-skill evidence audit is in [trend_evidence_audit.md](trend_evidence_audit.md).
+As of 22 October 2026, 19 skills have directional evidence and three remain
+unverified. Raw UK advert shares and counts are retained in
+`trend_observations.csv`. These observations measure the UK permanent IT
+recruitment sample; they do not establish Malaysian demand or AI causation.
+Update the raw observations and trend explanation together after reviewing the
+online source. A CSV edit is not automatic online synchronisation.

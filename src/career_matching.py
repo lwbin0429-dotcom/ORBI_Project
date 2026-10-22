@@ -28,6 +28,9 @@ class CareerMatch:
     matched_skill_ids: tuple[str, ...]
     missing_skill_ids: tuple[str, ...]
     degree_related: bool
+    trend_adjustment: Fraction = Fraction(0)
+    scenario_multiplier: int = 0
+    known_trend_count: int = 0
 
     @property
     def coverage(self) -> Fraction:
@@ -39,6 +42,18 @@ class CareerMatch:
     @property
     def match_score(self) -> float:
         return float(self.coverage * 100)
+
+    @property
+    def ranking_value(self) -> Fraction:
+        adjusted = (
+            self.coverage * 100
+            + self.scenario_multiplier * self.trend_adjustment
+        )
+        return max(Fraction(0), min(Fraction(100), adjusted))
+
+    @property
+    def ranking_score(self) -> float:
+        return float(self.ranking_value)
 
 
 def _ids(value: str) -> tuple[str, ...]:
@@ -121,6 +136,9 @@ def rank_careers(
     selected_skill_ids: list[str],
     degree_id: str,
     limit: int = 3,
+    *,
+    trend_codes: dict[str, int] | None = None,
+    scenario_multiplier: int = 0,
 ) -> list[CareerMatch]:
     selected = set(selected_skill_ids)
     results = []
@@ -128,17 +146,26 @@ def rank_careers(
         required = tuple(dict.fromkeys(career.required_skills))
         if not required:
             continue
+        codes = trend_codes or {}
+        adjustment = Fraction(
+            10 * sum(codes.get(sid, 0) for sid in required),
+            len(required),
+        )
         results.append(
             CareerMatch(
                 career=career,
                 matched_skill_ids=tuple(sid for sid in required if sid in selected),
                 missing_skill_ids=tuple(sid for sid in required if sid not in selected),
                 degree_related=degree_id in career.related_degrees,
+                trend_adjustment=adjustment,
+                scenario_multiplier=scenario_multiplier,
+                known_trend_count=sum(sid in codes for sid in required),
             )
         )
     # Exact fractions prevent rounded display values from creating false ties.
     results.sort(
         key=lambda match: (
+            -match.ranking_value,
             -match.coverage,
             not match.degree_related,
             match.career.career_name.casefold(),

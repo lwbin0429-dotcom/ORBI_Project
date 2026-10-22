@@ -2,7 +2,7 @@
 
 > A career exploration and reskilling platform for students and graduates from five computing degree programmes.
 
-## Current implementation — Parts 1 and 2
+## Current implementation — Parts 1 to 3
 
 Part 1 provides an English-language HTML/CSS page for selecting one of the five supported
 degrees and multiple self-reported skills. Click **Analyse My Future** to validate
@@ -12,7 +12,7 @@ profile. Choosing a degree never automatically selects skills.
 
 Profiles stay in browser memory until the tab is refreshed or closed. The HTML/CSS
 frontend sends degree and skill IDs to a Flask API for validation and matching.
-No profile is written to disk, and no identity or CV is requested. Parts 1 and 2
+No profile is written to disk, and no identity or CV is requested. Parts 1 to 3
 do not call RunPod or require API credentials.
 
 Part 2 ranks 15 sourced occupations from `data/careers.csv` and shows the top
@@ -28,6 +28,7 @@ Skill coverage (%) = 100 × matched required skills / all required skills
 Scores measure coverage of ORBI's curated skill subset, not employment probability
 or complete job readiness. All careers remain eligible across degrees. Degree
 relevance breaks exact score ties only; remaining ties use career name and ID.
+Part 3 adds scenario ranking while keeping coverage separate and unchanged.
 Sorting uses exact fractions before display rounding. A 0% result is labelled as
 an exploration option. Changing inputs hides old results until you submit again.
 
@@ -40,7 +41,51 @@ Missing required skills, unknown skill/degree IDs, or missing source evidence
 exclude a career with an explanation. File-level catalogue errors leave profile
 intake available and display a warning.
 
-SDG columns remain reserved and empty until Part 5. Trends, courses and AI
+Part 3 reads manually reviewed evidence from `data/trends.csv` and
+`data/market_signals.csv` on every analysis. It displays selected skill signals,
+required-skill evidence, source links, publication dates, data review dates and
+reference periods. Moderate/Fast controls recompute the top three using:
+
+```text
+Trend Adjustment = 10 × average trend code over all required skills
+Moderate Score = clamp(coverage + Trend Adjustment, 0, 100)
+Fast Score = clamp(coverage + 2 × Trend Adjustment, 0, 100)
+```
+
+Rising = +1, Stable = 0, Declining = −1, Unknown = 0 with an insufficient-evidence
+badge. Unknown remains in the denominator and never appears as Stable. Rank by
+scenario score, coverage, degree relevance, career name, then ID. Scenario scores
+are ORBI heuristic estimates, not employment probabilities or measured AI effects.
+They can change scores without changing the order. Failed trend loading falls
+back to coverage-only matching.
+
+Reviewed evidence covers **19 of 22 skills**. Three classifications remain
+unverified: Computer Graphics, Computer Networks and Security Risk Assessment.
+The snapshot combines HackerRank assessment activity, UK IT Jobs Watch advert
+shares, WEF employer expectations and a published database-design projection.
+Each panel identifies its metric, geography and period. Historical advert shares
+are not Malaysian demand or forecasts. Source snapshot dates and review dates
+are labelled separately from publication dates.
+The selected-skill panel highlights validated signals and groups Unknown records
+in an expandable section while displaying the full evidence coverage count.
+The WEF source describes a
+closely corresponding design/user experience category; broad AI, programming or
+cybersecurity evidence is not assigned to narrower tools. DOSM records cover
+**Software Developers in 2026-Q1 and 2026-Q2 only**. The selected career's local
+market panel shows those observations when available, or explicitly reports
+missing evidence. Local market counts never alter skill scores.
+
+Sources are real public publications, maintained manually in CSV. This is not a
+live API feed or automatic web sync. Updating a reviewed CSV changes the next
+analysis without restarting the server. See [evidence and update methodology](data/trend_methodology.md)
+for source URLs, mapping decisions, dates, limitations and review steps.
+
+To demonstrate scenarios, select any degree and HTML & CSS. The interface design
+career has 25% coverage, 22.5 Moderate score and 20 Fast score in the reviewed
+snapshot. To see DOSM evidence, select Python, SQL and Git & Version Control,
+then explore Software Developers. These are fictional demo skill profiles.
+
+SDG columns remain reserved and empty until Part 5. Courses and RunPod AI
 explanations are not implemented yet. The remaining competition sections below
 are a submission template and still need to be completed.
 
@@ -66,13 +111,20 @@ in a black and red theme.
 - `src/static/app.js`: skill search, selections and results interaction.
 - `src/profile_data.py`: CSV loading and input validation.
 - `src/career_matching.py`: career validation, skill gaps and deterministic ranking.
+- `src/trend_data.py`: trend/market validation, evidence payloads and comparisons.
 - `data/degrees.csv`: exactly five supported degree programmes.
 - `data/skills.csv`: editable computing skills catalogue.
 - `data/careers.csv`: 15 careers with required skills and source evidence.
+- `data/trends.csv`: 22 reviewed skill records with explicit Unknowns.
+- `data/trend_observations.csv`: 15 raw UK advert-share observations for 13 skills.
+- `data/trend_evidence_audit.md`: the complete 22-skill evidence and gap register.
+- `data/market_signals.csv`: two DOSM quarterly observations for Software Developers.
+- `data/trend_methodology.md`: Part 3 sources, calculations and update process.
 - `data/README.md`: data provenance and editing rules.
 - `tests/test_profile.py`: profile validation and data integrity checks.
 - `tests/test_career_matching.py`: scoring, sorting and invalid records.
 - `tests/test_web.py`: page, assets, API validation and matching responses.
+- `tests/test_trends.py`: scenarios, evidence validation, fallback and reload checks.
 
 Run checks with `python -m unittest discover tests` after installing dependencies.
 

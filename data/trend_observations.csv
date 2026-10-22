@@ -1,0 +1,16 @@
+skill_id,source_skill,source_url,snapshot_date,current_share_percent,previous_share_percent,current_ad_count,previous_ad_count
+S04,HTML,https://www.itjobswatch.co.uk/jobs/uk/html.do,2026-10-02,0.91,2.67,1079,1322
+S04,CSS,https://www.itjobswatch.co.uk/jobs/uk/css.do,2026-09-08,0.99,2.39,1109,1175
+S06,Git,https://www.itjobswatch.co.uk/jobs/uk/git.do,2026-10-20,1.33,2.28,1601,1114
+S07,Data Structures,https://www.itjobswatch.co.uk/jobs/uk/data%20structures.do,2026-08-28,0.38,0.72,420,362
+S07,Algorithms,https://www.itjobswatch.co.uk/jobs/uk/algorithms.do,2026-09-04,0.52,1.36,574,666
+S08,Software Testing,https://www.itjobswatch.co.uk/jobs/uk/software%20testing.do,2026-10-21,0.82,0.94,987,463
+S09,API Development,https://www.itjobswatch.co.uk/jobs/uk/api%20development.do,2026-10-11,0.26,0.36,312,177
+S12,3D Modelling,https://www.itjobswatch.co.uk/jobs/uk/3d%20modelling.do,2026-10-13,0.093,0.045,110,22
+S13,Data Analysis,https://www.itjobswatch.co.uk/jobs/uk/data%20analysis.do,2026-10-20,1.30,2.62,1558,1278
+S14,Statistics,https://www.itjobswatch.co.uk/jobs/uk/statistics.do,2026-10-16,0.32,1.12,377,546
+S15,Data Visualisation,https://www.itjobswatch.co.uk/jobs/uk/data%20visualisation.do,2026-10-19,0.40,0.94,474,459
+S16,Machine Learning,https://www.itjobswatch.co.uk/jobs/uk/machine%20learning.do,2026-10-21,2.10,4.95,2529,2429
+S19,Linux,https://www.itjobswatch.co.uk/jobs/uk/linux.do,2026-10-20,2.21,4.26,2649,2079
+S20,Cloud Computing,https://www.itjobswatch.co.uk/jobs/uk/cloud%20computing.do,2026-10-19,0.50,0.51,594,251
+S21,Network Security,https://www.itjobswatch.co.uk/jobs/uk/network%20security.do,2026-10-20,0.77,1.07,926,521

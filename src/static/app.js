@@ -50,6 +50,7 @@ function resetResults() {
   empty.hidden = false;
   status.textContent = "WAITING FOR YOUR PROFILE";
   matches = [];
+  document.querySelector("#results-content").setAttribute("aria-busy", "false");
   showErrors([]);
 }
 
@@ -118,8 +119,118 @@ function renderCard(match, index) {
     sourceLink("Skill evidence ↗", match.career.skill_source_url),
     element("small", "", `Source checked: ${match.career.source_checked_at}`),
   );
-  card.append(rank, heading, score, track, count, matched, missing, sources);
+  const scenarioScore = element("div", "scenario-score");
+  scenarioScore.append(
+    element("span", "", "Scenario ranking score · estimate"),
+    element("strong", "", `${match.ranking_score.toFixed(1)} / 100`),
+  );
+  const adjustment = element(
+    "p",
+    "field-help",
+    `Trend adjustment: ${match.trend_adjustment >= 0 ? "+" : ""}${match.trend_adjustment.toFixed(2)} × ${match.scenario_multiplier}. ` +
+      `Directional evidence: ${match.known_trend_count}/${match.career.required_skills.length} required skills. Unknown counts as 0, not Stable.`,
+  );
+  card.append(
+    rank,
+    heading,
+    score,
+    track,
+    count,
+    scenarioScore,
+    adjustment,
+    matched,
+    missing,
+    sources,
+  );
   return card;
+}
+
+function trendBadge(direction) {
+  return element(
+    "span",
+    `trend-badge trend-${direction}`,
+    direction === "unknown"
+      ? "Unknown · insufficient evidence"
+      : direction.charAt(0).toUpperCase() + direction.slice(1),
+  );
+}
+
+function renderTrend(trend) {
+  const card = element("article", "trend-card");
+  card.append(
+    element("h4", "", skillNames.get(trend.skill_id) || trend.skill_id),
+    trendBadge(trend.trend_direction),
+  );
+  const details = element("details", "trend-evidence");
+  details.append(
+    element("summary", "", "Evidence & dates"),
+    element("p", "", trend.evidence_note),
+  );
+  if (trend.source_url) {
+    const label = trend.trend_direction === "unknown" ? "Reviewed source" : "Source";
+    details.append(
+      sourceLink(`${label}: ${trend.source_name} ↗`, trend.source_url),
+      element(
+        "p",
+        "",
+        `${{ publication: "Published", snapshot: "Snapshot as of", review: "Reviewed" }[trend.source_date_kind] || "Source date"}: ${trend.source_date} · Period: ${trend.reference_period} · Reviewed: ${trend.updated_at}`,
+      ),
+    );
+  }
+  if (trend.source_skill) {
+    details.append(element("p", "", `Source category: ${trend.source_skill}`));
+  }
+  if (trend.geography || trend.metric) {
+    details.append(
+      element("p", "", `Scope: ${trend.geography} · Metric: ${trend.metric}`),
+    );
+  }
+  if (trend.supporting_urls) {
+    trend.supporting_urls.split(";").forEach((url, index) => {
+      details.append(sourceLink(`Supporting source ${index + 1} ↗`, url));
+    });
+  }
+  card.append(details);
+  return card;
+}
+
+function renderMarket(signal) {
+  const target = document.querySelector("#market-content");
+  target.replaceChildren();
+  if (!signal.records.length) {
+    target.append(
+      element("p", "field-help", "Local market evidence unavailable for this career."),
+    );
+    return;
+  }
+  const records = element("div", "market-records");
+  signal.records.forEach((record) => {
+    const card = element("article", "market-record");
+    card.append(
+      element("h4", "", record.period),
+      element("strong", "market-count", record.job_offerings.toLocaleString("en")),
+      element("p", "", `Online job offerings · ${record.occupation_name}`),
+      sourceLink(`${record.source_name} ↗`, record.source_url),
+      element(
+        "p",
+        "field-help",
+        `Published: ${record.source_date} · Data updated: ${record.updated_at}`,
+      ),
+      element("p", "field-help", record.mapping_note),
+    );
+    records.append(card);
+  });
+  target.append(records);
+  if (signal.change_percent !== null) {
+    target.append(
+      element(
+        "p",
+        "market-change",
+        `Quarter-on-quarter change: ${signal.change_percent >= 0 ? "+" : ""}${signal.change_percent.toFixed(2)}%`,
+      ),
+    );
+  }
+  target.append(element("p", "field-help", signal.comparison_note));
 }
 
 function renderGap() {
@@ -141,16 +252,48 @@ function renderGap() {
         ),
       );
       row.append(element("td", "", skillNames.get(id) || id), statusCell);
+      const trend = match.required_skill_trends.find((item) => item.skill_id === id);
+      const trendCell = element("td");
+      trendCell.append(trendBadge(trend.trend_direction));
+      row.append(trendCell);
       return row;
     }),
   );
   document.querySelector("#evidence-note").textContent = match.career.evidence_note;
+  document
+    .querySelector("#required-trends")
+    .replaceChildren(...match.required_skill_trends.map(renderTrend));
+  renderMarket(match.market_signal);
 }
 
 document.querySelector("#career-select").addEventListener("change", renderGap);
 
-function renderResults(data) {
+function renderResults(data, scroll = true) {
   matches = data.matches;
+  document.querySelector(`#scenario-${data.scenario}`).checked = true;
+  document.querySelector("#scenario-state").textContent = data.trends_available
+    ? `${data.scenario === "fast" ? "Fast" : "Moderate"} scenario · multiplier ${data.scenario_multiplier} · estimate`
+    : "Trend evidence unavailable · skill coverage ranking";
+  const supportedTrends = data.skill_trends.filter(
+    (trend) => trend.trend_direction !== "unknown",
+  );
+  const unknownTrends = data.skill_trends.filter(
+    (trend) => trend.trend_direction === "unknown",
+  );
+  document
+    .querySelector("#skill-trends")
+    .replaceChildren(...supportedTrends.map(renderTrend));
+  document.querySelector("#trend-coverage-summary").textContent =
+    `${supportedTrends.length} of ${data.skill_trends.length} selected skills have validated signals. ` +
+    (supportedTrends.length
+      ? "Review the metric and period in each evidence panel."
+      : "No direct trend evidence is available for your selection; career requirements may have additional evidence below.");
+  document.querySelector("#unknown-trends-details").hidden = unknownTrends.length === 0;
+  document.querySelector("#unknown-trends-summary").textContent =
+    `${unknownTrends.length} selected skills awaiting direct evidence (Unknown)`;
+  document
+    .querySelector("#unknown-skill-trends")
+    .replaceChildren(...unknownTrends.map(renderTrend));
   document.querySelector("#profile-summary").textContent =
     `${degreeNames.get(data.profile.degree_id)} · ${data.profile.user_skill_ids.length} skills selected`;
   document
@@ -169,6 +312,7 @@ function renderResults(data) {
   );
   document.querySelector("#gap-section").hidden = matches.length === 0;
   if (matches.length) renderGap();
+  document.querySelector("#market-section").hidden = matches.length === 0;
   document.querySelector("#excluded-details").hidden =
     data.excluded_records.length === 0;
   document
@@ -176,21 +320,26 @@ function renderResults(data) {
     .replaceChildren(
       ...data.excluded_records.map((message) => element("li", "", message)),
     );
+  const evidenceIssues = [...data.trend_issues, ...data.market_issues];
+  document.querySelector("#evidence-issues").hidden = evidenceIssues.length === 0;
+  document
+    .querySelector("#evidence-issues-list")
+    .replaceChildren(...evidenceIssues.map((issue) => element("li", "", issue)));
   status.textContent = matches.length
     ? `${matches.length} PATHS TO EXPLORE`
     : "PROFILE READY";
   empty.hidden = true;
   content.hidden = false;
-  document.querySelector("#results").scrollIntoView({
-    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      ? "instant"
-      : "smooth",
-    block: "start",
-  });
+  if (scroll)
+    document.querySelector("#results").scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "instant"
+        : "smooth",
+      block: "start",
+    });
 }
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
+async function analyseProfile(scroll = true) {
   const selected = checkboxes
     .filter((input) => input.checked)
     .map((input) => input.value);
@@ -210,27 +359,36 @@ form.addEventListener("submit", async (event) => {
   submitButton.disabled = true;
   document.querySelector("#analyse-label").textContent = "Finding your direction…";
   form.setAttribute("aria-busy", "true");
+  content.setAttribute("aria-busy", "true");
+  status.textContent = "UPDATING RESULTS…";
   try {
     const response = await fetch("/api/analyse", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ degree_id: degree.value, user_skill_ids: selected }),
+      body: JSON.stringify({
+        degree_id: degree.value,
+        user_skill_ids: selected,
+        scenario: document.querySelector('input[name="scenario"]:checked').value,
+      }),
       signal: requestController.signal,
     });
     const data = await response.json();
     if (current !== requestVersion) return;
     if (!response.ok) {
+      resetResults();
       showErrors(data.errors || ["Unable to analyse your profile. Please try again."]);
       return;
     }
-    renderResults(data);
+    renderResults(data, scroll);
   } catch (error) {
-    if (current === requestVersion)
+    if (current === requestVersion) {
+      resetResults();
       showErrors([
         error.name === "AbortError"
           ? "The request timed out. Please try again."
           : "Unable to connect. Please try again.",
       ]);
+    }
   } finally {
     clearTimeout(timeout);
     if (current === requestVersion) {
@@ -238,6 +396,18 @@ form.addEventListener("submit", async (event) => {
       submitButton.disabled = false;
       document.querySelector("#analyse-label").textContent = "Analyse My Future";
       form.setAttribute("aria-busy", "false");
+      content.setAttribute("aria-busy", "false");
     }
   }
+}
+
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  analyseProfile();
+});
+
+document.querySelectorAll('input[name="scenario"]').forEach((input) => {
+  input.addEventListener("change", () => {
+    if (!content.hidden) analyseProfile(false);
+  });
 });

@@ -384,6 +384,79 @@
             id="results-warnings"
             aria-live="polite"
           ></div>
+          <section
+            class="trend-section"
+            aria-labelledby="trends-title"
+          >
+            <p class="eyebrow">EVIDENCE, NOT ASSUMPTIONS</p>
+            <h3 id="trends-title">Skills trend signals</h3>
+            <p class="results-explainer">
+              Signals for your selected skills. Unknown means the reviewed sources
+              do not establish a direct trend for this skill; it does not mean Stable.
+              Evidence includes global employer expectations and historical hiring
+              assessment activity. Neither is a Malaysian vacancy forecast.
+            </p>
+            <div
+              id="skill-trends"
+              class="trend-grid"
+            ></div>
+            <p
+              id="trend-coverage-summary"
+              class="field-help"
+              aria-live="polite"
+            ></p>
+            <details
+              id="unknown-trends-details"
+              class="source-details"
+              hidden
+            >
+              <summary id="unknown-trends-summary">Skills awaiting direct evidence</summary>
+              <div
+                id="unknown-skill-trends"
+                class="trend-grid"
+              ></div>
+            </details>
+          </section>
+          <section
+            class="scenario-panel"
+            aria-labelledby="scenario-title"
+          >
+            <div>
+              <p class="eyebrow">EXPLORE THE UNCERTAINTY</p>
+              <h3 id="scenario-title">Compare disruption scenarios</h3>
+              <p class="results-explainer">
+                These are ORBI heuristic estimates, not measured probabilities of
+                employment or AI disruption. Scenario changes recompute the top three.
+              </p>
+            </div>
+            <fieldset class="scenario-options">
+              <legend class="sr-only">Choose disruption scenario</legend>
+              <label>
+                <input
+                  type="radio"
+                  name="scenario"
+                  id="scenario-moderate"
+                  value="moderate"
+                  checked
+                />
+                <span>Moderate <small>1× trend adjustment</small></span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="scenario"
+                  id="scenario-fast"
+                  value="fast"
+                />
+                <span>Fast <small>2× trend adjustment</small></span>
+              </label>
+            </fieldset>
+            <p
+              id="scenario-state"
+              class="field-help"
+              aria-live="polite"
+            ></p>
+          </section>
           <div
             id="career-cards"
             class="career-grid"
@@ -417,6 +490,7 @@
                   <tr>
                     <th scope="col">Required skill</th>
                     <th scope="col">Your profile</th>
+                    <th scope="col">Trend signal</th>
                   </tr>
                 </thead>
                 <tbody id="gap-rows"></tbody>
@@ -426,7 +500,57 @@
               id="evidence-note"
               class="field-help"
             ></p>
+            <details class="source-details">
+              <summary>Required skill trend evidence and dates</summary>
+              <div
+                id="required-trends"
+                class="trend-grid"
+              ></div>
+            </details>
           </section>
+          <section
+            id="market-section"
+            class="gap-panel"
+            aria-labelledby="market-title"
+            hidden
+          >
+            <p class="eyebrow">LOCAL CONTEXT</p>
+            <h3 id="market-title">Malaysia market signals</h3>
+            <p class="results-explainer">
+              Published DOSM observations for the selected career. These are
+              historical online recruitment statistics, kept separate from skill
+              trends and scenario scores. Missing records are not zero demand.
+            </p>
+            <div id="market-content"></div>
+          </section>
+          <details class="source-details">
+            <summary>Sources, calculation and update method</summary>
+            <p>
+              Trend codes: Rising +1, Stable 0, Declining −1, Unknown 0.
+              Trend adjustment = 10 × the average code across all required skills.
+              Scenario score = skill coverage + multiplier × trend adjustment,
+              limited to 0–100. Unknowns stay in the denominator.
+            </p>
+            <p>
+              Data is manually reviewed against public publications and reloaded
+              on every analysis request. Data updated is the curator's review date,
+              not a live sync timestamp. Newer publications require a dataset review;
+              sources are not automatically synchronised from the web.
+            </p>
+            <p>
+              Missing or invalid trend evidence contributes zero adjustment.
+              A trend-file failure falls back to skill coverage ranking. The same
+              career order in both scenarios can be a valid result.
+            </p>
+          </details>
+          <details
+            id="evidence-issues"
+            class="source-details"
+            hidden
+          >
+            <summary>Evidence validation notices</summary>
+            <ul id="evidence-issues-list"></ul>
+          </details>
           <details
             id="excluded-details"
             class="source-details"
@@ -436,8 +560,8 @@
             <ul id="excluded-list"></ul>
           </details>
           <p class="method-note">
-            How we rank: skill coverage first; degree relevance only breaks exact ties,
-            then career name. Cross-degree paths are included. ORBI curates skill
+            How we rank: scenario score, then skill coverage, then degree relevance
+            for exact ties, then career name. Cross-degree paths are included. ORBI curates skill
             subsets and degree associations from the linked sources. O*NET describes
             U.S. occupations; local requirements may differ.
           </p>

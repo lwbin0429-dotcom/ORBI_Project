@@ -8,6 +8,14 @@ from flask import Flask, jsonify, render_template, request
 
 from career_matching import load_careers, rank_careers
 from profile_data import load_catalogue, validate_profile
+from trend_data import (
+    SCENARIOS,
+    TREND_CODES,
+    describe_trend,
+    load_market_signals,
+    load_trends,
+    market_summary,
+)
 
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -50,6 +58,9 @@ def analyse():
         return jsonify(errors=["Send a valid JSON profile."]), 400
     degree_id = payload.get("degree_id")
     skill_ids = payload.get("user_skill_ids")
+    scenario = payload.get("scenario", "moderate")
+    if not isinstance(scenario, str) or scenario not in SCENARIOS:
+        return jsonify(errors=["Choose Moderate or Fast scenario."]), 400
     if (
         (degree_id is not None and not isinstance(degree_id, str))
         or not isinstance(skill_ids, list)
@@ -76,13 +87,50 @@ def analyse():
 
     profile = {"degree_id": degree_id, "user_skill_ids": list(dict.fromkeys(skill_ids))}
     warnings = []
+    skill_catalogue_ids = {row["skill_id"] for row in skills}
+    trend_issues = []
+    try:
+        trends, trend_issues = load_trends(
+            DATA_DIR / "trends.csv",
+            skill_catalogue_ids,
+        )
+    except (OSError, ValueError):
+        trends = {}
+        warnings.append(
+            "Trend evidence is unavailable. Ranking uses skill coverage only."
+        )
+    trend_codes = {
+        sid: TREND_CODES[trend.trend_direction]
+        for sid, trend in trends.items()
+        if trend.trend_direction != "unknown"
+    }
+    if not trend_codes and not warnings:
+        warnings.append(
+            "No validated directional skill evidence is available. "
+            "Ranking uses skill coverage only; Unknown does not mean Stable."
+        )
+    market_signals = []
+    market_issues = []
     try:
         careers, issues = load_careers(
             DATA_DIR / "careers.csv",
             {row["degree_id"] for row in degrees},
             {row["skill_id"] for row in skills},
         )
-        matches = rank_careers(careers, profile["user_skill_ids"], degree_id)
+        matches = rank_careers(
+            careers,
+            profile["user_skill_ids"],
+            degree_id,
+            trend_codes=trend_codes,
+            scenario_multiplier=SCENARIOS[scenario] if trend_codes else 0,
+        )
+        try:
+            market_signals, market_issues = load_market_signals(
+                DATA_DIR / "market_signals.csv",
+                {career.career_id for career in careers},
+            )
+        except (OSError, ValueError):
+            warnings.append("Malaysia market evidence is currently unavailable.")
     except (OSError, ValueError):
         matches, issues = [], []
         warnings.append(
@@ -102,11 +150,33 @@ def analyse():
     return jsonify(
         profile=profile,
         matches=[
-            {**asdict(match), "match_score": match.match_score}
+            {
+                **asdict(match),
+                "trend_adjustment": float(match.trend_adjustment),
+                "match_score": match.match_score,
+                "ranking_score": match.ranking_score,
+                "required_skill_trends": [
+                    describe_trend(sid, trends)
+                    for sid in match.career.required_skills
+                ],
+                "market_signal": market_summary(
+                    match.career.career_id,
+                    market_signals,
+                ),
+            }
             for match in matches
         ],
         warnings=warnings,
         excluded_records=issues,
+        scenario=scenario,
+        scenario_multiplier=SCENARIOS[scenario],
+        trends_available=bool(trend_codes),
+        skill_trends=[
+            describe_trend(sid, trends)
+            for sid in profile["user_skill_ids"]
+        ],
+        trend_issues=trend_issues,
+        market_issues=market_issues,
     )
 
 
